@@ -2,41 +2,54 @@
 This is the basic BN GNN class
 """
 
-import torch
 import torch.nn as nn
-from custom_block import MegNetBlock, HamHeadMeg
+from .custom_block import MegNetBlock, HamHeadMeg
 
 
-class BNGNN(nn.Module):
+class HGnn(nn.Module):
     def __init__(self,
                  edge_shape,
                  node_shape,
                  u_shape,
                  embed_size=[32, 32, 32],
                  ham_graph_emb=[4, 4, 4]):
-        super(BNGNN, self).__init__()
+        super(HGnn, self).__init__()
 
         # Pre-process embedding
-        self.embed = MegNetBlock(edge_shape, node_shape, u_shape, embed_size=embed_size)
+        self.embedding = MegNetBlock(edge_shape, node_shape, u_shape, embed_size=embed_size, inner_skip=True)
 
         # Core Model
         n_blocks = 3
         self.core = nn.ModuleList()
         for i in range(n_blocks - 1):
-            self.blocks.append(MegNetBlock(edge_shape, node_shape, u_shape, embed_size=embed_size))
+            self.core.append(MegNetBlock(embed_size[0], embed_size[1], embed_size[2], embed_size=embed_size))
 
         # Hamiltonian Extraction 
-        self.hamiltonian_head = HamHeadMeg(edge_shape, node_shape, u_shape, embedded_graph_size=ham_graph_emb)
+        self.hamiltonian_head = HamHeadMeg(edge_shape=embed_size[0],
+                                           node_shape=embed_size[1],
+                                           u_shape=embed_size[2],
+                                           embedded_graph_size=ham_graph_emb)
 
     def forward(self, x, edge_index, edge_attr, state, batch, bond_batch):
+        """
+        :param x: Node proprieties
+        :param edge_index: edges as [[vi....][vj.....]]
+        :param edge_attr:edge attributes
+        :param state:the global state
+        :param batch: the batch (group of the graph) from where the node comes
+        :param bond_batch: the bach from where the dge comes from
+        :return: updated_node values , updated_edges, updated_global_state
+        """
 
-        if self.embeded is not None:
-            x, edge_atr, state = self.embed(x, edge_index, edge_attr, state, batch, bond_batch)
+        # Embedding
+        if self.embedding is not None:
+            x, edge_attr, state = self.embedding(x, edge_index, edge_attr, state, batch, bond_batch)
 
         # Update the graph
-        x, edge_atr, state = self.core(x, edge_index, edge_attr, state, batch, bond_batch)
+        for module in self.core:
+            x, edge_attr, state = module(x, edge_index, edge_attr, state, batch, bond_batch)
 
         # Extract hamiltonian
-        ham_ii, ham_ij, ij = self.self.hamiltonian_head(x, edge_index, edge_attr, state, batch, bond_batch)
+        ham_ii, ham_ij, ij = self.hamiltonian_head(x, edge_index, edge_attr, state, batch, bond_batch)
 
         return ham_ii, ham_ij, ij

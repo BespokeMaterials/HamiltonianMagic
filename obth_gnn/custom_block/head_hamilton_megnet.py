@@ -11,40 +11,38 @@ from .block_megnet import MegNetBlock, ShiftedSoftPlus
 
 
 class HamHeadMeg(nn.Module):
-    def __int__(self,
-                edge_shape,
-                node_shape,
-                u_shape,
-                embedded_graph_size=[3, 3, 3]):
+    def __init__(self,
+                 edge_shape,
+                 node_shape,
+                 u_shape,
+                 embedded_graph_size):
         super(HamHeadMeg, self).__init__()
 
-        self.graph_level = MegNetBlock(edge_shape, node_shape, u_shape, inner_skip=False,
+        self.graph_level = MegNetBlock(edge_shape, node_shape, u_shape, inner_skip=True,
                                        embed_size=embedded_graph_size, )
-        self.se = Set2Set(embedded_graph_size[0], 1)
-        self.sv = Set2Set(embedded_graph_size[1], 1)
 
         # convert the vector to the proper onsite or hopping value
-        self.filter_v = nn.Sequential(
-            nn.Linear(embedded_graph_size[1], 2 * embedded_graph_size[1]),
-            ShiftedSoftPlus(),
-            nn.Linear(2 * embedded_graph_size[1], embedded_graph_size[1]),
-            ShiftedSoftPlus(),
-            nn.Linear(embedded_graph_size[1], 1),
-        )
-        self.filter_e = nn.Sequential(
-            nn.Linear(embedded_graph_size[0], 2 * embedded_graph_size[0]),
-            ShiftedSoftPlus(),
-            nn.Linear(2 * embedded_graph_size[0], embedded_graph_size[0]),
-            ShiftedSoftPlus(),
-            nn.Linear(embedded_graph_size[0], 1),
-        )
+        self.filter = MegNetBlock(embedded_graph_size[0], embedded_graph_size[1], embedded_graph_size[1],
+                                  inner_skip=True,
+                                  embed_size=[1, 1, 1], )
 
     def forward(self, x, edge_index, edge_attr, state, batch, bond_batch):
-        x, edge_attr, state = self.graph_level(x, edge_index, edge_attr, state, batch, bond_batch)
-        x = self.sv(x, batch)
-        edge_attr = self.se(edge_attr, bond_batch)
+        """
+        Pas the input graph to a graph processing step.
+        Pass the result to a filter step that will put the note vale and edges to a one-dimensional nr.
+        :param x: Node proprieties
+        :param edge_index: edges as [[vi....][vj.....]]
+        :param edge_attr:edge attributes
+        :param state:the global state
+        :param batch: the batch (group of the graph) from where the node comes
+        :param bond_batch: the bach from where the dge comes from
+        :return: updated_node values , updated_edges, updated_global_state
+        """
 
-        h_ii = self.filter_v(x)
-        h_ij = self.filter_e(edge_attr)
+        x, edge_attr, state = self.graph_level(x, edge_index, edge_attr, state, batch, bond_batch)
+        x, edge_attr, state = self.filter(x, edge_index, edge_attr, state, batch, bond_batch)
+
+        h_ii = x
+        h_ij = edge_attr
 
         return h_ii, h_ij, edge_index

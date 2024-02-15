@@ -92,11 +92,11 @@ class MegNetBlock(MessagePassing):
 
     def embedding(self, x, edge_attr, state):
         """
-
-        :param x:
-        :param edge_attr:
-        :param state:
-        :return:
+        Upgrade x, edge_attr, state to the right dimension for the rest od the model.
+        :param x: features of the x node
+        :param edge_attr:edge_attr: ( torch. Tensor ) edge attributes
+        :param state:( torch. Tensor ) global state
+        :return:x, edge_attr, state
         """
         x = self.preprocess_v(x)
         edge_attr = self.preprocess_e(edge_attr)
@@ -110,10 +110,10 @@ class MegNetBlock(MessagePassing):
         # it is called in propagate.
         # is hte message that starts from one node to another one
 
-        :param x_i:
-        :param x_j:
-        :param edge_attr:
-        :return:
+        :param x_i:( torch. Tensor ) features of the x_i node.
+        :param x_j:( torch. Tensor ) features of the x_k node.
+        :param edge_attr: ( torch. Tensor ) edge attributes
+        :return:edge_attr updated edge attributes
         """
 
         return edge_attr
@@ -122,10 +122,10 @@ class MegNetBlock(MessagePassing):
         """
         # function that updated the nodes
 
-        :param inputs:
-        :param x:
-        :param state:
-        :param batch:
+        :param inputs: the average of th edges.
+        :param x: features of the x node
+        :param state:( torch. Tensor ) global state
+        :param batch:-TODO : clarify after discussion
         :return:
         """
 
@@ -136,37 +136,38 @@ class MegNetBlock(MessagePassing):
         # function that updates the edges
         # it is used in edge updater
 
-        :param x_i:
-        :param x_j:
-        :param edge_attr:
-        :param state:
-        :param bond_batch:
-        :return:
+        :param x_i:( torch. Tensor ) features of the x_i node. it has the shape [nr_edges, node_feature.shape]
+        :param x_j: ( torch. Tensor ) features of the x_j node. it has the shape [nr_edges, node_feature.shape]
+        :param edge_attr: ( torch. Tensor ) edge attributes
+        :param state: ( torch. Tensor ) global state
+        :param bond_batch: -TODO : clarify after discussion
+        :return:phi_e(x_i, x_j, edge_attr, state)
         """
 
-        return self.phi_e(torch.cat((x_i, x_j, edge_attr, state[bond_batch, :])))
+        cat = torch.cat((x_i, x_j, edge_attr, state[bond_batch, :]), 1)
+
+        return self.phi_e(cat)
 
     def forward(self, x, edge_index, edge_attr, state, batch, bond_batch):
         """
-
         :param x: Node proprieties
         :param edge_index: edges as [[vi....][vj.....]]
-        :param edge_attr:edge atributes 
-        :param state:the global state 
-        :param batch: the batch (group of th egraph) from where thenode comes
+        :param edge_attr:edge attributes
+        :param state:the global state
+        :param batch: the batch (group of the graph) from where the node comes
         :param bond_batch: the bach from where the dge comes from  
         :return: updated_node values , updated_edges, updated_global_state
         """
 
         # Preprocessing 
         if self.inner_skip:
-            # We "add" the value after the internal embeding
+            # We "add" the value after the internal embedding
             x, edge_attr, state = self.embedding(x, edge_attr, state)
             x_skip = x
             edge_attr_skip = edge_attr
             state_skip = state
         else:
-            # We "add" the original values th eones  before the internal embeding
+            # We "add" the original values the ones  before the internal embedding
             # This may rage shape problems
             x_skip = x
             edge_attr_skip = edge_attr

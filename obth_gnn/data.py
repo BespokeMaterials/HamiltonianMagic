@@ -8,5 +8,3 @@ class MaterialGraph(Data):
         self.edge_index = edge_index  # Edge indices
         self.edge_attr = edge_attr  # Edge features
         self.u = u  # Global features
-
-
