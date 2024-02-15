@@ -4,4 +4,4 @@
 
 
 
-Observeble base tygtht biniding graph neural network 
+Observeble base tygtht biniding graph neural network. 
