@@ -80,6 +80,7 @@ class Trainer:
                     # Print statistics
                     print(f"Epoch {epoch + 1}/{num_epochs}, "
                           f"Train Loss: {running_loss / len(self.train_loader):.4f}, ")
+        return self.model
 
 
 def main():
@@ -97,7 +98,7 @@ def main():
     # At the moment it crushes for batch !=1 .
     train_dataloader = DataLoader(training_data, batch_size=1, shuffle=True, )
     val_loader = None
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.005)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.05)
 
     def dos_difference_classic(target_dos, h_out):
         eigenvalues = torch.linalg.eigvalsh(h_out)
@@ -117,7 +118,10 @@ def main():
                       optimizer=optimizer,
                       device=device)
 
-    trainer.train(num_epochs=100)
+    trainer.train(num_epochs=10)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.025)
+    trainer.optimizer=optimizer
+    trainer.train(num_epochs=50)
 
 
 if __name__ == "__main__":

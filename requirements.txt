@@ -4,3 +4,5 @@ numpy~=1.26.4
 chardet~=5.2.0
 networkx~=3.2.1
 matplotlib~=3.8.2
+gopy~=0.7.3
+ase~=3.22.1
