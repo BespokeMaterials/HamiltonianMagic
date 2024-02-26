@@ -16,7 +16,7 @@ def soft_threshold(x, delta):
 
 
 # Compute the density of states
-def density_of_states_classic(energy, eigenvalues, delta=0.05):
+def density_of_states_classic(energy, eigenvalues, delta=0.0005):
     dos = soft_threshold(torch.abs(eigenvalues - energy), delta)
     dos=torch.mean(dos)
     return dos

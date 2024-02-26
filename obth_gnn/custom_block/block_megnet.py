@@ -184,9 +184,14 @@ class MegNetBlock(MessagePassing):
         # the function above will call message and update 
         x = self.propagate(edge_index=edge_index, x=x, edge_attr=edge_attr, state=state, batch=batch)
         # Extracting the mean values from the graph required to update the global state
+
+
         u_v = global_mean_pool(x, batch)
+
         u_e = global_mean_pool(edge_attr, bond_batch, batch.max().item() + 1)
 
+
+        #Todod:here i will have th eproblem
         # Computing the new global ste of the graph
         state = self.phi_u(torch.cat((u_e, u_v, state), 1))
 

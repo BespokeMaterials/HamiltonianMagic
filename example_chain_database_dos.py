@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 
 from obth_gnn.data import MaterialGraph
 from obth_gnn.cost_functions.classical_denity_of_states import get_dos
-from torch_geometric.data import Data
+
 
 class MyTensor(torch.Tensor):
     """
@@ -78,7 +78,7 @@ def create_circle_graph_dos(nr_nodes, colors=[1, 2], features_node=2, features_e
     dos=get_dos(ham,  steps, delta )
 
     # Create custom graph
-    graph = Data(x=x, edge_index=edge_index, edge_attr=edge_attr, u=u,bond_batch = MyTensor(np.zeros(edge_index.shape[1])).long(),y=dos, ham=ham)
+    graph = MaterialGraph(x=x, edge_index=edge_index, edge_attr=edge_attr, u=u,bond_batch = MyTensor(np.zeros(edge_index.shape[1])).long(),y=dos, dos0=dos[0], dos1=dos[1], ham=ham)
 
     return graph, dos
 

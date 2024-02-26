@@ -4,7 +4,7 @@ Example
 
 import torch
 import networkx as nx
-from torch_geometric.data import DataLoader
+from torch_geometric.loader import DataLoader
 from torch_geometric.data import Batch
 
 from obth_gnn import HGnn
@@ -33,26 +33,17 @@ class Trainer:
             # Training loop
             for inputs, targets in self.train_loader:
                 inputs, targets = inputs.to(self.device), targets.to(self.device)
-                # print("inputs",inputs)
-                # print("inputs0", inputs[0])
-                # print("targets", targets)
                 self.optimizer.zero_grad()
                 inputs.to(self.device)
                 x = inputs.x
                 edge_index = inputs.edge_index
                 edge_attr = inputs.edge_attr
-                state = inputs.u.unsqueeze(0)
-                batch = MyTensor(np.zeros(x.shape[0])).long()
+                state = inputs.u
+                batch = inputs.batch
                 bond_batch = inputs.bond_batch
-                # print("bond_batch", bond_batch)
-                # print("start x :", x.shape)
-                # print("start edge_index :", edge_index.shape)
-                # print("start edge_attr :", edge_attr.shape)
-                # print("state shape:", state.shape)
-                # print("batch:", batch)
-                # print(model.to("cuda:0"))
+
                 hii, hij, ij = self.model(x, edge_index, edge_attr, state, batch.to(self.device), bond_batch.to(self.device))
-                h_out = basic_ham_reconstruction(hii, hij, ij, self.device)
+                h_out = basic_ham_reconstruction(hii, hij, ij,batch, self.device)
                 loss = self.loss_fn(targets, h_out, )
                 loss.backward()
                 self.optimizer.step()
@@ -90,7 +81,7 @@ def main ():
     training_data = torch.load('artificial_graph_database/line_nodes_10_color_1_2.pt', )
     #TODO:Solve batch problem
     # At the moment it crushes for batch !=1 .
-    train_dataloader = DataLoader(training_data, batch_size=1, shuffle=True, )
+    train_dataloader = DataLoader(training_data, batch_size=3, shuffle=True, )
     val_loader = None
     optimizer = torch.optim.Adam(model.parameters(), lr=0.006)
 

@@ -5,7 +5,7 @@ TODO: the batch problem still needs to be solve
 
 import torch
 import networkx as nx
-from torch_geometric.data import DataLoader
+from torch_geometric.loader import DataLoader
 from torch_geometric.data import Batch
 
 from obth_gnn import HGnn
@@ -36,28 +36,21 @@ class Trainer:
             for inputs, targets in self.train_loader:
                 inputs, targets = inputs.to(self.device), targets
 
-                # print("inputs",inputs)
-                # print("inputs0", inputs[0])
-                # print("targets", targets)
-                self.optimizer.zero_grad()
                 inputs.to(self.device)
                 x = inputs.x
                 edge_index = inputs.edge_index
                 edge_attr = inputs.edge_attr
-                state = inputs.u.unsqueeze(0)
-                batch = MyTensor(np.zeros(x.shape[0])).long()
+                state = inputs.u
+                batch = inputs.batch
                 bond_batch = inputs.bond_batch
-                # print("bond_batch", bond_batch)
-                # print("start x :", x.shape)
-                # print("start edge_index :", edge_index.shape)
-                # print("start edge_attr :", edge_attr.shape)
-                # print("state shape:", state.shape)
-                # print("batch:", batch)
-                # print(model.to("cuda:0"))
+
+                self.optimizer.zero_grad()
                 hii, hij, ij = self.model(x, edge_index, edge_attr, state, batch.to(self.device),
                                           bond_batch.to(self.device))
-                h_out = basic_ham_reconstruction(hii, hij, ij, self.device)
-                loss = self.loss_fn(targets, h_out)
+                h_out = basic_ham_reconstruction(hii, hij, ij, batch, self.device)
+                y = [inputs.dos0, inputs.dos1]
+                loss = self.loss_fn(y, h_out)
+
                 loss.backward()
                 self.optimizer.step()
                 running_loss += loss.item()
@@ -85,7 +78,6 @@ class Trainer:
 
 def main():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    print("Device: ", device)
     model = HGnn(edge_shape=3,
                  node_shape=2,
                  u_shape=2,
@@ -96,20 +88,24 @@ def main():
     training_data = torch.load('artificial_graph_database/line_nodes_10_color_1_2_dos.pt', )
     # TODO:Solve batch problem
     # At the moment it crushes for batch !=1 .
-    train_dataloader = DataLoader(training_data, batch_size=1, shuffle=True, )
+    train_dataloader = DataLoader(training_data, batch_size=3, shuffle=True, )
     val_loader = None
     optimizer = torch.optim.Adam(model.parameters(), lr=0.05)
 
-    def dos_difference_classic(target_dos, h_out):
-        eigenvalues = torch.linalg.eigvalsh(h_out)
+    def dos_difference_classic(target_dos_, h_out_):
+        t_dif = 0
+        for i, h_out in enumerate(h_out_):
+            target_dos = [target_dos_[0][i], target_dos_[1][i]]
 
-        output_dos = [density_of_states_classic(energy, eigenvalues) for energy in target_dos[0][0]]
-
-        #TODO: Make it more efficient thisn is horrible
-        dif = [ (x - y.to(device))**2 for x, y in zip(output_dos, target_dos[1])]
-        dif = sum(dif)
-
-        return dif
+            eigenvalues = torch.linalg.eigvalsh(h_out)
+            print("eigv:" , eigenvalues[:10])
+            output_dos = [density_of_states_classic(energy, eigenvalues) for energy in target_dos[0]]
+            print("odos:", output_dos)
+            # TODO: Make it more efficient thisn is horrible
+            dif = [(x - y.to(device)) ** 2 for x, y in zip(output_dos, target_dos[1])]
+            dif = sum(dif)
+            t_dif += dif
+        return t_dif
 
     trainer = Trainer(model,
                       train_loader=train_dataloader,
@@ -118,10 +114,9 @@ def main():
                       optimizer=optimizer,
                       device=device)
 
-    trainer.train(num_epochs=10)
+    trainer.train(num_epochs=100)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.025)
-    trainer.optimizer=optimizer
-    trainer.train(num_epochs=50)
+    trainer.optimizer = optimizer
 
 
 if __name__ == "__main__":

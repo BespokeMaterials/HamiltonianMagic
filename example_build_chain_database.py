@@ -72,7 +72,8 @@ def create_circle_graph(nr_nodes, colors=[1, 2], features_node=2, features_edge=
         ham[i][edge_index[1][k]] = 0.7 * (x[i][0] + x[edge_index[1][k]][0])
 
     # Create custom graph
-    graph = Data(x=x, edge_index=edge_index, edge_attr=edge_attr, u=u,bond_batch = MyTensor(np.zeros(edge_index.shape[1])).long(),y=ham)
+    graph = MaterialGraph(x=x, edge_index=edge_index, edge_attr=edge_attr,
+                          bond_batch = MyTensor(np.zeros(edge_index.shape[1])).long(), u=u,y=ham)
 
     return graph, ham
 
