@@ -15,14 +15,15 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 from obth_gnn.data import MaterialGraph
 from torch_geometric.data import Data
+
 
 class MyTensor(torch.Tensor):
     """
     this class is needed to work with graphs without edges
     """
+
     def max(self, *args, **kwargs):
         if torch.numel(self) == 0:
             return 0
@@ -73,7 +74,7 @@ def create_circle_graph(nr_nodes, colors=[1, 2], features_node=2, features_edge=
 
     # Create custom graph
     graph = MaterialGraph(x=x, edge_index=edge_index, edge_attr=edge_attr,
-                          bond_batch = MyTensor(np.zeros(edge_index.shape[1])).long(), u=u,y=ham)
+                          bond_batch=MyTensor(np.zeros(edge_index.shape[1])).long(), u=u, y=ham)
 
     return graph, ham
 
@@ -97,13 +98,14 @@ def graph_info(data):
     print("Number of edge attributes:", data.num_edge_features)  # Number of edge attributes
     print("Number of global attributes:", data.u.shape)  # Number of global attributes
 
+
 # Build a dataset
 class ColorChain(torch.utils.data.Dataset):
     def __init__(self, num_samples,
-                        nr_nodes,
-                        colors=[1, 2],
-                        features_node=2,
-                        features_edge=3 ):
+                 nr_nodes,
+                 colors=[1, 2],
+                 features_node=2,
+                 features_edge=3):
         """
         Construct a custom dataset of colored circled graphs
         :param num_samples: (int) nr of the parameters in the data set.
@@ -117,7 +119,7 @@ class ColorChain(torch.utils.data.Dataset):
         self.num_samples = num_samples
         self.data_list = []
         for _ in range(num_samples):
-            graph, ham = create_circle_graph( nr_nodes, colors, features_node, features_edge)
+            graph, ham = create_circle_graph(nr_nodes, colors, features_node, features_edge)
             self.data_list.append((graph, ham))
 
     def __len__(self):
@@ -127,13 +129,12 @@ class ColorChain(torch.utils.data.Dataset):
         return self.data_list[idx]
 
 
-
 def main():
     """
     Example
     """
     # One graph example
-    starting_graph, ham  = create_circle_graph(5)
+    starting_graph, ham = create_circle_graph(5)
 
     print("starting_graph", starting_graph.x)
     print("data.edge_index", starting_graph.edge_index)
@@ -149,16 +150,15 @@ def main():
     nx.draw(g)
     plt.show()
 
-    dataset=ColorChain(num_samples=100,
-                            nr_nodes=10,
-                            colors=[1, 2],
-                            features_node=2,
-                            features_edge=3 )
+    dataset = ColorChain(num_samples=100,
+                         nr_nodes=10,
+                         colors=[1, 2],
+                         features_node=2,
+                         features_edge=3)
 
     torch.save(dataset, 'artificial_graph_database/line_nodes_10_color_1_2.pt')
     print("Done the dataset is constructed and saved")
 
+
 if __name__ == "__main__":
     main()
-
-

@@ -15,7 +15,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from copy import deepcopy
 
 
-def pristine_graphene(dim=[10,10]):
+def pristine_graphene(dim=[10, 10]):
     """
     piece of grapheene of the target dim.
     :param dim: dimsnions.[x,z] how many tiles on x and ho many on x
@@ -31,7 +31,7 @@ def introduce_vacancies(atoms, num_vacancies):
     Introduce vacancies randomly into the graphene nanoribbon.
     """
 
-    for _ in range(num_vacancies):
+    for _ in range(int(num_vacancies)):
         n_atoms = len(atoms)
         index = randint(0, n_atoms - 2)
         del atoms[index]
@@ -46,7 +46,8 @@ def introduce_substitutions(atoms, substitution_element, num_substitutions):
         index = randint(0, n_atoms - 1)
         atoms[index].symbol = substitution_element
 
-def relax_structure(structure,steps=1000,fmax=0.05,temperature=300,timestep=1.0):
+
+def relax_structure(structure, steps=1000, fmax=0.05, temperature=300, timestep=1.0):
     """
     Relax the structure a bit to not be completely SF.
     :param structure: graphene structure as ase object
@@ -57,16 +58,16 @@ def relax_structure(structure,steps=1000,fmax=0.05,temperature=300,timestep=1.0)
     :return: relaxed structure.
     """
 
-    st=deepcopy(structure)
-    st.calc=EMT()
+    st = deepcopy(structure)
+    st.calc = EMT()
 
     # Relax the structure using BFGS optimization
     opt = BFGS(st)
     opt.run(fmax=fmax)
 
     # Perform Langevin dynamics simulation to further relax the structure
-    #dyn = Langevin(st, timestep=timestep * units.fs, temperature_K=temperature, friction=0.02)
-    #dyn.run(steps)  # Run for the specified number of steps
+    # dyn = Langevin(st, timestep=timestep * units.fs, temperature_K=temperature, friction=0.02)
+    # dyn.run(steps)  # Run for the specified number of steps
 
     # Visualize the relaxed structure
     st.center()  # Center the structure for visualization
@@ -74,34 +75,38 @@ def relax_structure(structure,steps=1000,fmax=0.05,temperature=300,timestep=1.0)
     return st
 
 
-graphene_sheet = pristine_graphene()
-# Extract coordinates of atoms
-positions = graphene_sheet.positions
+def main():
+    graphene_sheet = pristine_graphene()
+    # Extract coordinates of atoms
+    positions = graphene_sheet.positions
 
-# Plot 3D graphene structure
-fig = plt.figure(figsize=(8, 6))
-ax = fig.add_subplot(111, projection='3d')
+    # Plot 3D graphene structure
+    fig = plt.figure(figsize=(8, 6))
+    ax = fig.add_subplot(111, projection='3d')
 
-# Scatter plot of atoms
-ax.scatter(positions[:, 0], positions[:, 1], positions[:, 2], s=1, c='black')
+    # Scatter plot of atoms
+    ax.scatter(positions[:, 0], positions[:, 1], positions[:, 2], s=1, c='black')
 
-# Set plot labels
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Z')
-ax.set_title('Graphene Sheet')
+    # Set plot labels
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.set_title('DummyGraphene Sheet')
 
-plt.show()
+    plt.show()
 
-view(graphene_sheet)
-introduce_vacancies(graphene_sheet, 5)
-view(graphene_sheet)
+    view(graphene_sheet)
+    introduce_vacancies(graphene_sheet, 5)
+    view(graphene_sheet)
 
-graphene_sheet_relax=relax_structure(graphene_sheet,steps=1000,fmax=0.05,temperature=300,timestep=1.0)
-view(graphene_sheet_relax)
+    graphene_sheet_relax = relax_structure(graphene_sheet, steps=100, fmax=0.05, temperature=300, timestep=1.0)
+    view(graphene_sheet_relax)
+
+    # Introduce 5 substitutions with nitrogen ('N') atoms
+    introduce_substitutions(graphene_sheet, 'N', 30)
+    view(graphene_sheet)
+    write('../artificial_graph_database/DummyGraphene/ag.xyz', graphene_sheet)
 
 
-# Introduce 5 substitutions with nitrogen ('N') atoms
-introduce_substitutions(graphene_sheet, 'N', 30)
-view(graphene_sheet)
-write('../artificial_graph_database/Graphene/ag.xyz', graphene_sheet)
+if __name__ == "__main__":
+    main()

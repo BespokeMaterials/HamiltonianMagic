@@ -17,7 +17,6 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 from obth_gnn.data import MaterialGraph
 from obth_gnn.cost_functions.classical_denity_of_states import get_dos
 
@@ -26,6 +25,7 @@ class MyTensor(torch.Tensor):
     """
     this class is needed to work with graphs without edges
     """
+
     def max(self, *args, **kwargs):
         if torch.numel(self) == 0:
             return 0
@@ -33,7 +33,7 @@ class MyTensor(torch.Tensor):
             return torch.max(self, *args, **kwargs)
 
 
-def create_circle_graph_dos(nr_nodes, colors=[1, 2], features_node=2, features_edge=3,  steps=100, delta = 0.1):
+def create_circle_graph_dos(nr_nodes, colors=[1, 2], features_node=2, features_edge=3, steps=100, delta=0.1):
     """
     Constricts a random circular graph
     :param nr_nodes: (int) nr of nodes
@@ -75,10 +75,12 @@ def create_circle_graph_dos(nr_nodes, colors=[1, 2], features_node=2, features_e
         ham[i][edge_index[1][k]] = 0.7 * (x[i][0] + x[edge_index[1][k]][0])
 
     # Compute density of states
-    dos=get_dos(ham,  steps, delta )
+    dos = get_dos(ham, steps, delta)
 
     # Create custom graph
-    graph = MaterialGraph(x=x, edge_index=edge_index, edge_attr=edge_attr, u=u,bond_batch = MyTensor(np.zeros(edge_index.shape[1])).long(),y=dos, dos0=dos[0], dos1=dos[1], ham=ham)
+    graph = MaterialGraph(x=x, edge_index=edge_index, edge_attr=edge_attr, u=u,
+                          bond_batch=MyTensor(np.zeros(edge_index.shape[1])).long(), y=dos, dos0=dos[0], dos1=dos[1],
+                          ham=ham)
 
     return graph, dos
 
@@ -102,13 +104,14 @@ def graph_info(data):
     print("Number of edge attributes:", data.num_edge_features)  # Number of edge attributes
     print("Number of global attributes:", data.u.shape)  # Number of global attributes
 
+
 # Build a dataset
 class ColorChain(torch.utils.data.Dataset):
     def __init__(self, num_samples,
-                        nr_nodes,
-                        colors=[1, 2],
-                        features_node=2,
-                        features_edge=3 ):
+                 nr_nodes,
+                 colors=[1, 2],
+                 features_node=2,
+                 features_edge=3):
         """
         Construct a custom dataset of colored circled graphs
         :param num_samples: (int) nr of the parameters in the data set.
@@ -122,7 +125,7 @@ class ColorChain(torch.utils.data.Dataset):
         self.num_samples = num_samples
         self.data_list = []
         for _ in range(num_samples):
-            graph, dos = create_circle_graph_dos( nr_nodes, colors, features_node, features_edge)
+            graph, dos = create_circle_graph_dos(nr_nodes, colors, features_node, features_edge)
             self.data_list.append((graph, dos))
 
     def __len__(self):
@@ -132,13 +135,12 @@ class ColorChain(torch.utils.data.Dataset):
         return self.data_list[idx]
 
 
-
 def main():
     """
     Example
     """
     # One graph example
-    starting_graph, ham  = create_circle_graph_dos(10, colors=[1])
+    starting_graph, ham = create_circle_graph_dos(10, colors=[1])
 
     print("starting_graph", starting_graph.x)
     print("data.edge_index", starting_graph.edge_index)
@@ -152,7 +154,6 @@ def main():
     plt.savefig("img/DOS_line_nodes_10_color_1_2_dos.jpg")
     plt.show()
 
-
     for key, item in starting_graph:
         print(f'{key} found in data')
 
@@ -163,14 +164,15 @@ def main():
     nx.draw(g)
     plt.show()
 
-    dataset=ColorChain(num_samples=100,
-                            nr_nodes=10,
-                            colors=[1, 2],
-                            features_node=2,
-                            features_edge=3 )
+    dataset = ColorChain(num_samples=100,
+                         nr_nodes=10,
+                         colors=[1, 2],
+                         features_node=2,
+                         features_edge=3)
 
     torch.save(dataset, 'artificial_graph_database/line_nodes_10_color_1_2_dos.pt')
     print("Done the dataset is constructed and saved")
+
 
 if __name__ == "__main__":
     main()

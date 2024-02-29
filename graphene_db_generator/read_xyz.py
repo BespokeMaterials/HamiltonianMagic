@@ -52,7 +52,7 @@ def construct_graph_nx(atoms,positions, bonds):
 
 if __name__ == "__main__":
     # Replace 'your_file.xyz' with the path to your XYZ file
-    filename = '/home/ICN2/atomut/Documents/GitHub/hBNandGNN/artificial_graph_database/Graphene/ag.xyz'
+    filename = '/artificial_graph_database/DummyGraphene/ag.xyz'
 
     # Read XYZ file
     atoms, positions = read_xyz(filename)

@@ -1,1 +1,7 @@
 .venv/
+artificial_graph_database/DummyGraphene/vacancy/
+artificial_graph_database/DummyGraphene/vacancyRelax/
+artificial_graph_database/DummyGraphene/vacancySubRelax/
+artificial_graph_database/DummyGraphene/substitution/
+artificial_graph_database/DummyGraphene/vacancySubRelax/
+

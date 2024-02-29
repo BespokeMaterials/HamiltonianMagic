@@ -6,3 +6,4 @@ networkx~=3.2.1
 matplotlib~=3.8.2
 gopy~=0.7.3
 ase~=3.22.1
+grispy
