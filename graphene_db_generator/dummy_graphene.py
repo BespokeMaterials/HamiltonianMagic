@@ -99,13 +99,13 @@ def main():
     introduce_vacancies(graphene_sheet, 5)
     view(graphene_sheet)
 
-    graphene_sheet_relax = relax_structure(graphene_sheet, steps=100, fmax=0.05, temperature=300, timestep=1.0)
+    graphene_sheet_relax = relax_structure(graphene_sheet, steps=10, fmax=0.5, temperature=300, timestep=1.0)
     view(graphene_sheet_relax)
 
     # Introduce 5 substitutions with nitrogen ('N') atoms
     introduce_substitutions(graphene_sheet, 'N', 30)
     view(graphene_sheet)
-    write('../artificial_graph_database/DummyGraphene/ag.xyz', graphene_sheet)
+    write('../artificial_graph_database/DummyGraphene/agu.xyz', graphene_sheet,)
 
 
 if __name__ == "__main__":
