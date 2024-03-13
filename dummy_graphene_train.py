@@ -9,6 +9,20 @@ from torch_geometric.data import Batch
 
 from obth_gnn import HGnn
 
+from dummy_graphene_construct_dummyh import *
+
+
+# Check if CUDA (GPU support) is available
+if torch.cuda.is_available():
+    print("CUDA is available!")
+    # Get the number of available GPUs
+    num_gpus = torch.cuda.device_count()
+    print(f"Number of available GPUs: {num_gpus}")
+    # Get the name of the current GPU
+    gpu_name = torch.cuda.get_device_name(0)  # Assuming you have at least one GPU
+    print(f"Current GPU: {gpu_name}")
+else:
+    print("CUDA is not available. Using CPU.")
 
 
 def hop_on_difference(pred, targets):
@@ -98,7 +112,7 @@ def main():
     training_data = torch.load('artificial_graph_database/DummyGrapheneGraph/graphene_dm_00.pt', )
     # TODO:Solve batch problem
     # At the moment it crushes for batch !=1 .
-    train_dataloader = DataLoader(training_data, batch_size=1, shuffle=True, )
+    train_dataloader = DataLoader(training_data, batch_size=2, shuffle=True, )
     val_loader = None
     optimizer = torch.optim.Adam(model.parameters(), lr=0.006)
 
