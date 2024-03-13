@@ -15,7 +15,8 @@ class HamHeadMeg(nn.Module):
                  edge_shape,
                  node_shape,
                  u_shape,
-                 embedded_graph_size):
+                 embedded_graph_size,
+                 output_size=[1, 1, 1]):
         super(HamHeadMeg, self).__init__()
 
         self.graph_level = MegNetBlock(edge_shape, node_shape, u_shape, inner_skip=True,
@@ -24,7 +25,7 @@ class HamHeadMeg(nn.Module):
         # convert the vector to the proper onsite or hopping value
         self.filter = MegNetBlock(embedded_graph_size[0], embedded_graph_size[1], embedded_graph_size[1],
                                   inner_skip=True,
-                                  embed_size=[1, 1, 1], )
+                                  embed_size=output_size, )
 
     def forward(self, x, edge_index, edge_attr, state, batch, bond_batch):
         """

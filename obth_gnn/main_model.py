@@ -12,7 +12,8 @@ class HGnn(nn.Module):
                  node_shape,
                  u_shape,
                  embed_size=[32, 32, 32],
-                 ham_graph_emb=[4, 4, 4]):
+                 ham_graph_emb=[4, 4, 4],
+                 ham_output_size=[2,2,1]):
         super(HGnn, self).__init__()
 
         # Pre-process embedding
@@ -28,7 +29,8 @@ class HGnn(nn.Module):
         self.hamiltonian_head = HamHeadMeg(edge_shape=embed_size[0],
                                            node_shape=embed_size[1],
                                            u_shape=embed_size[2],
-                                           embedded_graph_size=ham_graph_emb)
+                                           embedded_graph_size=ham_graph_emb,
+                                           output_size=ham_output_size)
 
     def forward(self, x, edge_index, edge_attr, state, batch, bond_batch):
         """

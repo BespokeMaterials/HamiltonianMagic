@@ -98,6 +98,7 @@ class MegNetBlock(MessagePassing):
         :param state:( torch. Tensor ) global state
         :return:x, edge_attr, state
         """
+
         x = self.preprocess_v(x)
         edge_attr = self.preprocess_e(edge_attr)
         state = self.preprocess_u(state)
