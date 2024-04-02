@@ -13,14 +13,15 @@ class HGnn(nn.Module):
                  u_shape,
                  embed_size=[32, 32, 32],
                  ham_graph_emb=[4, 4, 4],
-                 ham_output_size=[2,2,1]):
+                 ham_output_size=[2,2,1],
+                 n_blocks=3):
         super(HGnn, self).__init__()
 
         # Pre-process embedding
         self.embedding = MegNetBlock(edge_shape, node_shape, u_shape, embed_size=embed_size, inner_skip=True)
 
         # Core Model
-        n_blocks = 3
+        n_blocks = n_blocks
         self.core = nn.ModuleList()
         for i in range(n_blocks - 1):
             self.core.append(MegNetBlock(embed_size[0], embed_size[1], embed_size[2], embed_size=embed_size))

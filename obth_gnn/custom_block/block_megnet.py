@@ -17,7 +17,7 @@ class ShiftedSoftPlus(nn.Module):
     def __init__(self):
         super().__init__()
         self.sp = nn.Softplus()
-        self.shift = nn.Parameter(torch.log(torch.tensor([2.])), requires_grad=False)
+        self.shift = nn.Parameter(torch.log(torch.tensor([7.])), requires_grad=True)
 
     def forward(self, x):
         return self.sp(x) - self.shift
@@ -39,6 +39,8 @@ class MegNetBlock(MessagePassing):
         edge_update_input_size = embed_size[1] + embed_size[1] + embed_size[0] + embed_size[2]
         self.phi_e = nn.Sequential(
             nn.Linear(edge_update_input_size, 2 * embed_size[0]),
+            ShiftedSoftPlus(),
+            nn.Linear(2 * embed_size[0], 2 * embed_size[0]),
             ShiftedSoftPlus(),
             nn.Linear(2 * embed_size[0], 2 * embed_size[0]),
             ShiftedSoftPlus(),

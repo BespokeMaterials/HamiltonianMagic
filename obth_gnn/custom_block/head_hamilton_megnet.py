@@ -19,11 +19,16 @@ class HamHeadMeg(nn.Module):
                  output_size=[1, 1, 1]):
         super(HamHeadMeg, self).__init__()
 
-        self.graph_level = MegNetBlock(edge_shape, node_shape, u_shape, inner_skip=True,
+        self.graph_level_ij = MegNetBlock(edge_shape, node_shape, u_shape, inner_skip=True,
                                        embed_size=embedded_graph_size, )
+        self.graph_level_ii = MegNetBlock(edge_shape, node_shape, u_shape, inner_skip=True,
+                                          embed_size=embedded_graph_size, )
 
         # convert the vector to the proper onsite or hopping value
-        self.filter = MegNetBlock(embedded_graph_size[0], embedded_graph_size[1], embedded_graph_size[1],
+        self.filter_ij = MegNetBlock(embedded_graph_size[0], embedded_graph_size[1], embedded_graph_size[1],
+                                  inner_skip=True,
+                                  embed_size=output_size, )
+        self.filter_ii = MegNetBlock(embedded_graph_size[0], embedded_graph_size[1], embedded_graph_size[1],
                                   inner_skip=True,
                                   embed_size=output_size, )
 
@@ -40,10 +45,12 @@ class HamHeadMeg(nn.Module):
         :return: updated_node values , updated_edges, updated_global_state
         """
 
-        x, edge_attr, state = self.graph_level(x, edge_index, edge_attr, state, batch, bond_batch)
-        x, edge_attr, state = self.filter(x, edge_index, edge_attr, state, batch, bond_batch)
+        x_ii, edge_attr_ii, state_ii = self.graph_level_ii(x, edge_index, edge_attr, state, batch, bond_batch)
+        x_ii, edge_attr_ii, state_ii = self.filter_ii(x_ii, edge_index, edge_attr_ii, state_ii, batch, bond_batch)
+        h_ii = x_ii
 
-        h_ii = x
-        h_ij = edge_attr
+        x_ij, edge_attr_ij, state_ij = self.graph_level_ij(x, edge_index, edge_attr, state, batch, bond_batch)
+        x_ij, edge_attr_ij, state_ij = self.filter_ij(x_ij, edge_index, edge_attr_ij, state_ij, batch, bond_batch)
+        h_ij = edge_attr_ij
 
         return h_ii, h_ij, edge_index

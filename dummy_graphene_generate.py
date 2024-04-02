@@ -49,14 +49,14 @@ def put_substitution(slices, place_to_save, subst_atoms=["N"], nr_subst=[1, 1]):
 def main():
     dim = [10, 10]
     nr_of_samples = 300
-    place_to_save_vac = "artificial_graph_database/DummyGraphene/vacancy"
+    place_to_save_vac = "artificial_graph_database/DummyGraphene/vacancy_2"
     place_to_save_vac_relax = "artificial_graph_database/DummyGraphene/vacancyRelax"
-    vacancy_interval = [10, 20]
+    vacancy_interval = [60, 100]
 
-    place_to_save_subst = "artificial_graph_database/DummyGraphene/substitution"
+    place_to_save_subst = "artificial_graph_database/DummyGraphene/substitution_2"
     place_to_save_vac_subst_relax = "artificial_graph_database/DummyGraphene/vacancySubRelax"
     subst_atoms = ["N", "B"]
-    nr_subst = [5, 15]
+    nr_subst = [20, 100]
 
     vac_slice = generate_graphene_vac(dim, nr_of_samples, place_to_save_vac, vacancy_interval)
     view(vac_slice[3])

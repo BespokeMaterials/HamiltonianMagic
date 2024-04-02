@@ -3,14 +3,12 @@ Example train with DOS
 TODO: the batch problem still needs to be solve
 """
 
-import torch
-import networkx as nx
+import torch as tr
 from torch_geometric.loader import DataLoader
 from torch_geometric.data import Batch
 
 from obth_gnn import HGnn
 from obth_gnn.reconstruct import basic_ham_reconstruction
-from obth_gnn.cost_functions import ham_difference
 from obth_gnn.cost_functions.classical_denity_of_states import density_of_states_classic
 from example_build_chain_database import *
 

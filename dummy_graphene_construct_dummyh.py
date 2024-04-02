@@ -10,8 +10,11 @@ import numpy as np
 import torch as tr
 import periodictable
 import os
-from torch_geometric.data import Data, InMemoryDataset
+import math
+from torch_geometric.data import Data, Dataset, InMemoryDataset
 from copy import deepcopy
+from scipy.special import sph_harm
+
 
 class MaterialMesh(Data):
     def __init__(self, x, edge_index, edge_attr, u, bond_batch, hop, onsite):
@@ -75,7 +78,7 @@ def hoping_to_dict(hoping_list):
         ho[h[0]] = {}
 
     for h in hoping_list:
-        ho[h[0]][h[1]] = h[2]
+        ho[h[0]][h[1]] = 10+h[2] #TODO do this +10 properly
     return ho
 
 
@@ -151,6 +154,71 @@ def xyz_to_system(xyz_file):
     return material
 
 
+def f_cut(r, decay_rate=3, cutoff=0.5):
+    """
+    Computes the cosine decay cutoff function.
+
+    Parameters:
+        r (float or numpy array): Distance value(s).
+        decay_rate (float): Decay rate parameter.
+
+    Returns:
+        float or numpy array: Output value(s) of the cosine decay cutoff function.
+    """
+    #return 0.5 * (1 + np.cos(np.pi * r)) * np.exp(-decay_rate * r)
+    # Compute values of cutoff function
+    cutoffs = 0.5 * (np.cos(r * math.pi / cutoff) + 1.0)
+    # Remove contributions beyond the cutoff radius
+    cutoffs *= (r < cutoff)
+    return cutoffs
+
+
+
+
+def bessel_distance(c1, c2, n=[1, 2, 3, 4, 5, 6], rc=3):
+    # print(f"c1:{c1}, c2:{c2}")
+    d = (c1[0] - c2[0]) ** 2 + (c1[1] - c2[1]) ** 2 + (c1[2] - c2[2]) ** 2
+    rij = np.sqrt(d * d)
+    c=np.sqrt(2 / rc)
+    fc =f_cut(rij, rc * 0.5)
+    bes = [c * fc* (np.sin(n_ * math.pi * rij / rc)) / rij for n_ in n]
+
+    return bes
+
+
+def spherical_harmonics(c1, c2,max_l=1 ):
+    # muve to center
+    rc=c1-c2
+    r, theta, phi = cartesian_to_spherical(rc[0], rc[1], rc[2])
+    y=[]
+    for l in range(max_l):
+        # yl=[]
+        for m in range(-l, l):
+            ylm=real_spherical_harmonics(l, m, theta, phi)
+            y.append(ylm)
+        # y.append(yl)
+    return y
+
+
+def cartesian_to_spherical(x, y, z):
+    r = np.sqrt(x ** 2 + y ** 2 + z ** 2)
+    theta = np.arccos(z / r)
+    phi = np.arctan2(y, x)
+    return r, theta, phi
+
+
+def real_spherical_harmonics(l, m, theta, phi):
+    # Compute the complex spherical harmonics
+    Y_lm_complex = sph_harm(m, l, phi, theta)
+
+    # Compute real spherical harmonics based on m value
+    if m > 0:
+        return np.sqrt(2) * np.real(Y_lm_complex)
+    elif m == 0:
+        return np.real(Y_lm_complex)
+    else:
+        return np.sqrt(2) * (-1) ** m * np.imag(Y_lm_complex)
+
 def xyz_to_graph(xyz_file):
     """
     Convert xyz_file toa graph.
@@ -167,7 +235,7 @@ def xyz_to_graph(xyz_file):
     # Construct the nodes
     node_features = []
     node_target = []
-    print("sl:",len(site_list.site_list))
+    print("sl:", len(site_list.site_list))
     for site in site_list.site_list:
         atomic_number = [get_atomic_number(site.label.split("_")[0])]
         orbital = [1]  # we are working only with one orbital  now
@@ -180,9 +248,9 @@ def xyz_to_graph(xyz_file):
         on = [onsite[site.uid].real, onsite[site.uid].imag]
         node_target.append(on)
     node_features = tr.tensor(deepcopy(node_features), dtype=tr.float32)
-    node_target = tr.tensor(node_target,dtype=tr.float32)
+    node_target = tr.tensor(node_target, dtype=tr.float32)
     print("len nf", len(node_features))
-    print("len nt",len(node_target))
+    print("len nt", len(node_target))
 
     # Construct edges:
     edge_index = [[], []]
@@ -192,35 +260,35 @@ def xyz_to_graph(xyz_file):
         na = n_[0]
         for nb in n_[1]:
             if nb != na:
-                edge_prop=[]
+                edge_prop = []
                 edge_index[0].append(na)
                 edge_index[1].append(nb)
                 na_s = site_list.get_sites([na])[0]
                 nb_s = site_list.get_sites([nb])[0]
 
                 distance = [np.sqrt(sum([s ** 2 for s in na_s.get_coord() - nb_s.get_coord()]))]
-                #print("distance:", distance)
+                # print("distance:", distance)
                 # Bassel
                 # TODO:
-                bassel_distance = distance
+                bassel_distance = bessel_distance(na_s.get_coord(), nb_s.get_coord(), n=[i for i in range(1,9)])
                 # Spherical
-                spherical = distance
+                spherical =spherical_harmonics(na_s.get_coord(), nb_s.get_coord(),max_l=4 ) #spherical_harmonics(na_s.get_coord(), na_s.get_coord())
 
                 edge_prop.extend(distance)
                 edge_prop.extend(bassel_distance)
                 edge_prop.extend(spherical)
 
-                #print(hopping)
-                hopp =[hopping[na][nb].real, hopping[na][nb].imag]
+                # print(hopping)
+                hopp = [hopping[na][nb].real, hopping[na][nb].imag]
                 edge_target.append(hopp)
                 edge_props.append(edge_prop)
     print(len(edge_props))
-    edge_props = tr.tensor(edge_props,dtype=tr.float32)
+    edge_props = tr.tensor(edge_props, dtype=tr.float32)
 
     print(len(edge_index[0]))
     print(len(edge_index[1]))
-    edge_index = tr.tensor(edge_index,dtype=tr.float32)
-    edge_target = tr.tensor(edge_target,dtype=tr.float32)
+    edge_index = tr.tensor(edge_index, dtype=tr.float32)
+    edge_target = tr.tensor(edge_target, dtype=tr.float32)
 
     # Global propriety:
     global_prop = [len(site_list.site_list)]
@@ -234,20 +302,20 @@ def xyz_to_graph(xyz_file):
                          edge_attr=edge_props,
                          u=global_prop,
                          bond_batch=MyTensor(np.zeros(edge_index.shape[1])).long(),
-                         hop= edge_target,
+                         hop=edge_target,
                          onsite=node_target)
     return graph
 
 
 # Build a dataset
-class MaterialDS(InMemoryDataset):
+class MaterialDS(tr.utils.data.Dataset):
     def __init__(self, graph_list):
         """
         Convert a list  of graphs into a dataset.
         :param graph_list: [list of pytorch geometric graphs]
         """
-
-        self.data_list = [(g,(g.onsite, g.hop)) for g in graph_list]
+        # (g.onsite, g.hop)
+        self.data_list = [(g) for g in graph_list]
 
     def __len__(self):
         return len(self.data_list)
@@ -257,7 +325,7 @@ class MaterialDS(InMemoryDataset):
 
 
 def main():
-    input_xyz_directory = "artificial_graph_database/DummyGraphene/substitution"
+    input_xyz_directory = "artificial_graph_database/DummyGraphene/substitution_2"
     # Extract all the files from directory:
     files = [f for f in os.listdir(input_xyz_directory) if os.path.isfile(os.path.join(input_xyz_directory, f))]
 
@@ -266,10 +334,9 @@ def main():
         graph = xyz_to_graph(f"{input_xyz_directory}/{file}")
         graphs.append(graph)
 
-
     print(graphs[0])
     material_ds = MaterialDS(graphs)
-    tr.save(material_ds, 'artificial_graph_database/DummyGrapheneGraph/graphene_dm_00.pt')
+    tr.save(material_ds, 'artificial_graph_database/DummyGrapheneGraph/graphene_dm_02.pt')
     return 0
 
 
