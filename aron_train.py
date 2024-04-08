@@ -181,7 +181,7 @@ def main():
     print("Device: ", device)
     model = HGnn(edge_shape=21,
                  node_shape=5,
-                 u_shape=1,
+                 u_shape=12,
                  embed_size=[42, 7, 10],
                  ham_graph_emb=[4, 4, 4],
                  n_blocks=7)
@@ -191,12 +191,12 @@ def main():
     for name, param in model.named_parameters():
         print(f"Parameter name: {name}, Parameter type: {param.dtype}")
 
-    training_data = torch.load('Aron/nn13.pt', )
-    valid_data = torch.load('Aron/nn13.pt', )
+    training_data = torch.load('Aron/13-nm.pt', )
+    valid_data = torch.load('Aron/13-nm.pt', )
     # TODO:Solve batch problem
     # At the moment it crushes for batch !=1 .
-    train_dataloader = DataLoader(training_data, batch_size=10, shuffle=True, )
-    val_loader = DataLoader(valid_data, batch_size=10, shuffle=True, )
+    train_dataloader = DataLoader(training_data, batch_size=1, shuffle=True, )
+    val_loader = DataLoader(valid_data, batch_size=1, shuffle=True, )
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0009)
 
     trainer = Trainer(model,
@@ -270,7 +270,7 @@ def main():
 
         dif_mat_r = target_mat_r - pred_mat_r
 
-        path="img/train_img/"
+        path= "img/aron"
         plot_matrx(target_mat_r, name=f'{ko}_tar_rmag.png', path=path)
         plot_matrx(pred_mat_r, name=f'{ko}_pred_rmag.png',path=path)
 

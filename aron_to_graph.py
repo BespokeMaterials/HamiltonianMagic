@@ -9,7 +9,7 @@ import math
 from torch_geometric.data import Data, Dataset, InMemoryDataset
 from copy import deepcopy
 from scipy.special import sph_harm
-
+from tqdm import tqdm
 
 class MaterialMesh(Data):
     def __init__(self, x, edge_index, edge_attr, u, bond_batch, hop, onsite):
@@ -60,7 +60,7 @@ def read_file_line_by_line(file_path):
 
 def n_parser(n_file):
     n_lines = read_file_line_by_line(n_file)
-    n_lines = [[int(l) for l in line[0].split()] for line in n_lines]
+    n_lines = [[int(l)-1 for l in line[0].split()] for line in n_lines]
 
     return n_lines
 
@@ -170,7 +170,7 @@ def to_graph(n, nn, s, ss, e, lattice_vectors, acc, cut_acc, atom_xyz):
         node_f.extend(orbital)
         node_f.extend(position)
         node_features.append(node_f)
-        on = [e[i][0]*100, 0*100]
+        on = [e[i][0]*1000, 0*1000]
         node_target.append(on)
 
     # print("node f:", node_features)
@@ -185,14 +185,17 @@ def to_graph(n, nn, s, ss, e, lattice_vectors, acc, cut_acc, atom_xyz):
     edge_props = []
     edge_target = []
 
-    for na, n_i in enumerate(n):
+    for na, n_i in tqdm(enumerate(n)):
         for j, nb in enumerate(n_i):
             if nb != na:
                 edge_prop = []
                 edge_index[0].append(na)
                 edge_index[1].append(nb)
                 na_s_coord = tr.tensor(atom_xyz[na])
+                # print(nb)
                 nb_s_coord = tr.tensor(atom_xyz[nb])
+                if na <0 or nb <0:
+                    print("oooooo")
                 # print(na_s_coord)
                 distance = [np.sqrt(sum([s ** 2 for s in na_s_coord - nb_s_coord]))]
                 # print("distance:", distance)
@@ -209,21 +212,23 @@ def to_graph(n, nn, s, ss, e, lattice_vectors, acc, cut_acc, atom_xyz):
                 edge_prop.extend(spherical)
 
                 # print(hopping)
-                hopp = [s[na][j], 0]*100
+                hopp = [s[na][j]*1000, 0*1000]
                 edge_target.append(hopp)
                 edge_props.append(edge_prop)
 
-    for na, n_i in enumerate(nn):
+    for na, n_i in tqdm(enumerate(nn)):
         for j, nb in enumerate(n_i):
             if nb != na:
                 edge_prop = []
                 edge_index[0].append(na)
                 edge_index[1].append(nb)
-                na_s_coord = atom_xyz[na]
-                nb_s_coord = atom_xyz[nb]
 
+
+                na_s_coord = tr.tensor(atom_xyz[na])
+                # print(nb)
+                nb_s_coord = tr.tensor(atom_xyz[nb])
                 distance = [np.sqrt(sum([s ** 2 for s in na_s_coord - nb_s_coord]))]
-                print("distance:", distance)
+                # print("distance:", distance)
                 # Bassel
                 # TODO:
                 bassel_distance = bessel_distance(na_s_coord, nb_s_coord, n=[i for i in range(1, 9)],
@@ -237,7 +242,7 @@ def to_graph(n, nn, s, ss, e, lattice_vectors, acc, cut_acc, atom_xyz):
                 edge_prop.extend(spherical)
 
                 # print(hopping)
-                hopp = [ss[na][j], 0]*100
+                hopp = [ss[na][j]*1000, 0*1000]
                 edge_target.append(hopp)
                 edge_props.append(edge_prop)
 
@@ -258,7 +263,6 @@ def to_graph(n, nn, s, ss, e, lattice_vectors, acc, cut_acc, atom_xyz):
                    lattice_vectors[1][0],
                    lattice_vectors[1][1],
                    lattice_vectors[1][2],
-                   lattice_vectors[1][3],
                    lattice_vectors[2][0],
                    lattice_vectors[2][1],
                    lattice_vectors[2][2]]
@@ -275,6 +279,7 @@ def to_graph(n, nn, s, ss, e, lattice_vectors, acc, cut_acc, atom_xyz):
                          bond_batch=MyTensor(np.zeros(edge_index.shape[1])).long(),
                          hop=edge_target,
                          onsite=node_target)
+    print("graph",graph)
     return graph
 
 
@@ -295,14 +300,15 @@ class MaterialDS(tr.utils.data.Dataset):
         return self.data_list[idx]
 
 
-def main():
-    n_file = "./Samples_for_Andrei/13-nm/n.txt"
-    nn_file = "./Samples_for_Andrei/13-nm/nn.txt"
-    s_file = "./Samples_for_Andrei/13-nm/s.txt"
-    ss_file = "./Samples_for_Andrei/13-nm/ss.txt"
-    e_file = "./Samples_for_Andrei/13-nm/e.txt"
-    xyz_file = "./Samples_for_Andrei/13-nm/sample_13nm_1.xyz"
+def file_to_grph( file_d, g_name,xyz):
 
+
+    n_file = f"Samples_for_Andrei/{file_d}/n.txt"
+    nn_file = f"Samples_for_Andrei/{file_d}/nn.txt"
+    s_file = f"Samples_for_Andrei/{file_d}/s.txt"
+    ss_file = f"Samples_for_Andrei/{file_d}/ss.txt"
+    e_file = f"Samples_for_Andrei/{file_d}/e.txt"
+    xyz_file = f"Samples_for_Andrei/{file_d}/{xyz}"
     n = n_parser(n_file)
     nn = n_parser(nn_file)
     s = s_parser(s_file)
@@ -314,10 +320,30 @@ def main():
     print("acc:", acc)
     print("cut_acc:", cut_acc)
 
-    graph13 = to_graph(n, nn, s, ss, e, lattice_vectors, acc, cut_acc, atom_xyz)
-    graphs=[graph13]
+    graph18 = to_graph(n, nn, s, ss, e, lattice_vectors, acc, cut_acc, atom_xyz)
+    graphs = [graph18]
     material_ds = MaterialDS(graphs)
-    tr.save(material_ds, 'Aron/nn13.pt')
+    tr.save(material_ds, f'Aron/{g_name}')
+    return graph18
+
+def main():
+
+    graphs=[]
+    print("13")
+    g= file_to_grph( file_d="13-nm", g_name="13-nm.pt",xyz="sample_13nm_1.xyz")
+    graphs.append(g)
+    print("18")
+    g = file_to_grph(file_d="18-nm", g_name="18-nm.pt",xyz="sample_18nm_1.xyz")
+    graphs.append(g)
+    material_ds = MaterialDS(graphs)
+    tr.save(material_ds, f'Aron/13-18-nn')
+    print("25")
+    g = file_to_grph(file_d="25-nm", g_name="25-nm.pt",xyz="sample_25.5nm_1.xyz")
+    graphs.append(g)
+    material_ds = MaterialDS(graphs)
+    tr.save(material_ds, f'Aron/13-18-25-nn')
+
+    print("Done")
     return 0
 
 
