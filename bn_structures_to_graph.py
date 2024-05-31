@@ -370,37 +370,40 @@ class MaterialDS(tr.utils.data.Dataset):
         return self.data_list[idx]
 
 def main():
-    dname = "aBN"
-    directory_path = f'BN_database/Hams_noPBC/{dname}'
-    xyz= f'BN_database/structures/{dname}'
-    files = list_files(directory_path)
-    print(files)
-
+    files =[]
+    #dname = "aBN"
     infos = {}
-    for file in files:
-        nr = int(file.split("_")[0])
-        name = f"{dname}_{nr}"
-        if name not in infos.keys():
-            infos[name] = {}
+    for dname in [ "BN_trilayer_interstitial", "aBN", ]:
+        directory_path = f'BN_database/Hams_noPBC/{dname}'
+        xyz= f'BN_database/structures/{dname}'
+        files = list_files(directory_path)
+      
+        
+        for file in files:
+            nr = int(file.split("_")[0])
+            name = f"{dname}_{nr}"
+            if name not in infos.keys():
+                infos[name] = {}
 
 
-        tip = file.split("_")[1]
-        if tip == "Ham":
-            infos[name]["ham"] = read_matrix_from_file(f"{directory_path}/{file}")
-        elif tip == "IndsHop":
-            infos[name]["edges"] = read_lndsHop_file(f"{directory_path}/{file}")
+            tip = file.split("_")[1]
+            if tip == "Ham":
+                infos[name]["ham"] = read_matrix_from_file(f"{directory_path}/{file}")
+            elif tip == "IndsHop":
+                infos[name]["edges"] = read_lndsHop_file(f"{directory_path}/{file}")
 
-        infos[name]["structure"] =read_xyz_file(f"{xyz}/{nr}.txt")
-        print( infos[name]["structure"])
+            infos[name]["structure"] =read_xyz_file(f"{xyz}/{nr}.txt")
+       
 
     graphs=[]
     for key in infos.keys():
+        print(key)
         info=infos[key]
         graph=info_to_graph(info)
         graphs.append(graph)
 
     material_ds = MaterialDS(graphs)
-    tr.save(material_ds, f'BN_database/Graphs/{dname}_noxyz_trick.pt')
+    tr.save(material_ds, f'BN_database/Graphs/mixt.pt')
     return 0
 
 

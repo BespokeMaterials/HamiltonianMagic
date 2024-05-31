@@ -1,23 +1,39 @@
 """
 Example Bn
 """
-
+import os
 import torch
 import numpy as np
 import networkx as nx
 from torch_geometric.loader import DataLoader
 from torch_geometric.data import Batch
 
-from obth_gnn import HGnn
+from hw.hw_model import HWizard
 import matplotlib.pyplot as plt
 from obth_gnn.reconstruct import basic_ham_reconstruction
-from obth_gnn.cost_functions import ham_difference
 from bn_structures_to_graph import MaterialDS, MaterialMesh, MyTensor
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 training_data = torch.load('BN_database/Graphs/aBN.pt')
 train_dataloader = DataLoader(training_data, batch_size=5, shuffle=True)
+
+def create_directory_if_not_exists(directory_path):
+    """
+    Creates a directory if it does not already exist.
+
+    Args:
+    directory_path (str): The path of the directory to create.
+
+    Returns:
+    None
+    """
+    if not os.path.exists(directory_path):
+        os.makedirs(directory_path)
+        print(f"Directory created: {directory_path}")
+    else:
+        print(f"Directory already exists: {directory_path}")
+
 
 def det_importance(targets):
     # Get unique values and their counts
@@ -47,38 +63,20 @@ def hop_on_difference(pred, targets):
     #print("pred", pred)
 
     # Get importance
-    targets_scale_0 = det_importance(targets_0).to(DEVICE)
-    targets_scale_1 = det_importance(targets_1).to(DEVICE)
+    #targets_scale_0 = det_importance(targets_0).to(DEVICE)
+   # targets_scale_1 = det_importance(targets_1).to(DEVICE)
     #print(pred_0)
     d_onsite  =torch.abs(pred_0 - targets_0)
-    d_onsite =d_onsite  * targets_scale_0
+    d_onsite =d_onsite  #* targets_scale_0
     d_onsite = torch.sum(d_onsite)
 
 
     d_hop=torch.abs(pred_1 - targets_1)
-    d_hop =d_hop*targets_scale_1
+    d_hop =d_hop #*targets_scale_1
     d_hop = torch.sum(d_hop)
     #print(f"onsite{d_onsite}-hop:{d_hop}")
-    loss =    kh * d_hop+d_hop**2 #+ ko * d_onsite  #
+    loss =    kh * d_hop+d_hop**2 + ko * d_onsite  #
 
-    #pred_0 = pred[0][:, 1]  # .reshape([pred[0].shape[0]*2])
-    #targets_0 = targets[0][:, 1]  # .reshape([pred[0].shape[0] * 2])
-    #pred_1 = pred[1][:, 1]  # .reshape([pred[1].shape[0] * 2])
-    #targets_1 = targets[1][:, 1]  # .reshape([pred[1].shape[0] * 2])
-
-    # Get importance
-    #targets_scale_0 = det_importance(targets_0).to(DEVICE)
-    #targets_scale_1 = det_importance(targets_1).to(DEVICE)
-
-    #d_onsite_i = torch.abs(pred_0 - targets_0)
-    #d_onsite_i = d_onsite_i * targets_scale_0
-    #d_onsite_i = torch.sum(d_onsite_i)
-    #d_hop_i = torch.abs(pred_1 - targets_1)
-    #d_hop_i = d_hop_i * targets_scale_1
-    #d_hop_i = torch.sum(d_hop_i)
-    # print(f"onsite{d_onsite}-hop:{d_hop}")
-    #loss_i = ko * d_onsite_i + kh * d_hop_i + d_hop_i ** 2
-    loss = loss # +loss_i
 
     return loss
 
@@ -170,21 +168,30 @@ def plot_matrx(matrix, name='heatmap.png', path=""):
     plt.clf()
 
 def main ():
+
+    # create the experimant archive
+    exp_name="test_hw_model"
+    create_directory_if_not_exists(exp_name)
+    create_directory_if_not_exists(f"{exp_name}/rezults")
+    create_directory_if_not_exists(f"{exp_name}/rezults/img")
+    create_directory_if_not_exists(f"{exp_name}/rezults/txt")
+
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     print("Device: ", device)
-    model = HGnn(edge_shape=51,
-                 node_shape=2, #8
-                 u_shape=10,
-                 embed_size=[20, 10, 5],
-                 ham_graph_emb=[5, 5, 5],
-                 n_blocks=1)
+
+    model = HWizard(edge_shape=51,
+                    node_shape=2,
+                    u_shape=2,
+                    embed_size=[21, 10, 5],
+                    ham_output_size=[2,2,1],
+                    orbital_blocks=3,
+                    pair_interaction_blocks=2,
+                    onsite_depth=2,
+                    ofsite_depth=2)
     model.to(device)
 
     training_data = torch.load('BN_database/Graphs/aBN_noxyz.pt', )
-    #TODO:Solve batch problem
-    # At the moment it crushes for batch !=1 .
-
-
+ 
     train_dataloader = DataLoader(training_data, batch_size=3, shuffle=True, )
     val_loader = None
 
@@ -206,7 +213,7 @@ def main ():
                       device=device)
     model = trainer.train(num_epochs=500)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.007)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.005)
     trainer = Trainer(model,
                       train_loader=train_dataloader,
                       val_loader=val_loader,
@@ -214,6 +221,25 @@ def main ():
                       optimizer=optimizer,
                       device=device)
     model = trainer.train(num_epochs=2100)
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.005)
+    trainer = Trainer(model,
+                      train_loader=train_dataloader,
+                      val_loader=val_loader,
+                      loss_fn=ham_difference,
+                      optimizer=optimizer,
+                      device=device)
+    model = trainer.train(num_epochs=500)
+
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.005)
+    trainer = Trainer(model,
+                      train_loader=train_dataloader,
+                      val_loader=val_loader,
+                      loss_fn=hop_on_difference,
+                      optimizer=optimizer,
+                      device=device)
+    model = trainer.train(num_epochs=1000)
 
     # Now let´s see the results:
     train_dataloader = DataLoader(training_data, batch_size=1, shuffle=True)
@@ -255,27 +281,27 @@ def main ():
 
         dif_mat_r = target_mat_r - pred_mat_r
 
-        path = "BN_database/rezults"
-        plot_matrx(target_mat_r, name=f'{ko}_tar_rmag.png', path=path)
+        path = f"{exp_name}/rezults"
+        plot_matrx(target_mat_r, name=f'{path}/img/{ko}_tar_rmag.png', path=path)
 
-        plot_matrx(pred_mat_r, name=f'{ko}_pred_rmag.png', path=path)
+        plot_matrx(pred_mat_r, name=f'{path}/img/{ko}_pred_rmag.png', path=path)
 
-        plot_matrx(dif_mat_r, name=f'{ko}_dif_real.png', path=path)
+        plot_matrx(dif_mat_r, name=f'{path}/img/{ko}_dif_real.png', path=path)
 
-        plot_matrx(dif_mat_i, name=f'{ko}_dif_imag.png', path=path)
+        plot_matrx(dif_mat_i, name=f'{path}/img/{ko}_dif_imag.png', path=path)
         print("Done")
         print("maxx:",dif_mat_r.max() )
         print("min:", dif_mat_r.min())
         mat = dif_mat_r.detach().numpy()
-        with open(f'{path}/{ko}_dif_rea.txt', 'wb') as f:
+        with open(f'{path}/txt/{ko}_dif_rea.txt', 'wb') as f:
             for line in mat:
                 np.savetxt(f, line, fmt='%.3f')
         mat = target_mat_r.detach().numpy()
-        with open(f'{path}/{ko}_target_mat_r.txt', 'wb') as f:
+        with open(f'{path}/txt/{ko}_target_mat_r.txt', 'wb') as f:
             for line in mat:
                 np.savetxt(f, line, fmt='%.3f')
         mat = pred_mat_r.detach().numpy()
-        with open(f'{path}/{ko}_pred_mat_r.txt', 'wb') as f:
+        with open(f'{path}/txt/{ko}_pred_mat_r.txt', 'wb') as f:
             for line in mat:
                 np.savetxt(f, line, fmt='%.3f')
 

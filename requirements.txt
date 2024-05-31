@@ -1,5 +1,6 @@
 torch==2.2.0
 torch-geometric==2.4.0
+pytorch-lightning
 numpy~=1.26.4
 chardet~=5.2.0
 networkx~=3.2.1
