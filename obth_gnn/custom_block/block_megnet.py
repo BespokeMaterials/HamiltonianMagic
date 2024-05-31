@@ -17,7 +17,7 @@ class ShiftedSoftPlus(nn.Module):
     def __init__(self):
         super().__init__()
         self.sp = nn.Softplus()
-        self.shift = nn.Parameter(torch.log(torch.tensor([7.])), requires_grad=True)
+        self.shift = nn.Parameter(torch.log(torch.tensor([1.])), requires_grad=True)
 
     def forward(self, x):
         return self.sp(x) - self.shift

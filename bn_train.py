@@ -21,6 +21,7 @@ train_dataloader = DataLoader(training_data, batch_size=5, shuffle=True)
 
 def det_importance(targets):
     # Get unique values and their counts
+    targets=targets.type(torch. int64) 
     values, counts = torch.unique(targets, return_counts=True)
     # Print the frequency of each value
     reciprocal_dict = {}
@@ -48,7 +49,7 @@ def hop_on_difference(pred, targets):
     # Get importance
     targets_scale_0 = det_importance(targets_0).to(DEVICE)
     targets_scale_1 = det_importance(targets_1).to(DEVICE)
-
+    #print(pred_0)
     d_onsite  =torch.abs(pred_0 - targets_0)
     d_onsite =d_onsite  * targets_scale_0
     d_onsite = torch.sum(d_onsite)
@@ -58,26 +59,26 @@ def hop_on_difference(pred, targets):
     d_hop =d_hop*targets_scale_1
     d_hop = torch.sum(d_hop)
     #print(f"onsite{d_onsite}-hop:{d_hop}")
-    loss =   ko * d_onsite + kh * d_hop+d_hop**2
+    loss =    kh * d_hop+d_hop**2 #+ ko * d_onsite  #
 
-    pred_0 = pred[0][:, 1]  # .reshape([pred[0].shape[0]*2])
-    targets_0 = targets[0][:, 1]  # .reshape([pred[0].shape[0] * 2])
-    pred_1 = pred[1][:, 1]  # .reshape([pred[1].shape[0] * 2])
-    targets_1 = targets[1][:, 1]  # .reshape([pred[1].shape[0] * 2])
+    #pred_0 = pred[0][:, 1]  # .reshape([pred[0].shape[0]*2])
+    #targets_0 = targets[0][:, 1]  # .reshape([pred[0].shape[0] * 2])
+    #pred_1 = pred[1][:, 1]  # .reshape([pred[1].shape[0] * 2])
+    #targets_1 = targets[1][:, 1]  # .reshape([pred[1].shape[0] * 2])
 
     # Get importance
-    targets_scale_0 = det_importance(targets_0).to(DEVICE)
-    targets_scale_1 = det_importance(targets_1).to(DEVICE)
+    #targets_scale_0 = det_importance(targets_0).to(DEVICE)
+    #targets_scale_1 = det_importance(targets_1).to(DEVICE)
 
-    d_onsite_i = torch.abs(pred_0 - targets_0)
-    d_onsite_i = d_onsite_i * targets_scale_0
-    d_onsite_i = torch.sum(d_onsite_i)
-    d_hop_i = torch.abs(pred_1 - targets_1)
-    d_hop_i = d_hop_i * targets_scale_1
-    d_hop_i = torch.sum(d_hop_i)
+    #d_onsite_i = torch.abs(pred_0 - targets_0)
+    #d_onsite_i = d_onsite_i * targets_scale_0
+    #d_onsite_i = torch.sum(d_onsite_i)
+    #d_hop_i = torch.abs(pred_1 - targets_1)
+    #d_hop_i = d_hop_i * targets_scale_1
+    #d_hop_i = torch.sum(d_hop_i)
     # print(f"onsite{d_onsite}-hop:{d_hop}")
-    loss_i = ko * d_onsite_i + kh * d_hop_i + d_hop_i ** 2
-    loss = loss +loss_i
+    #loss_i = ko * d_onsite_i + kh * d_hop_i + d_hop_i ** 2
+    loss = loss # +loss_i
 
     return loss
 
@@ -113,7 +114,10 @@ class Trainer:
                 hii, hij, ij = self.model(x, edge_index, edge_attr, state, batch.to(self.device),
                                           bond_batch.to(self.device))
 
+                
+
                 pred = (hii, hij)
+            
                 loss = self.loss_fn(pred, targets)
                 loss.backward()
                 self.optimizer.step()
@@ -163,19 +167,20 @@ def plot_matrx(matrix, name='heatmap.png', path=""):
     plt.title(name)
     plt.savefig(path+name)
     plt.show()
+    plt.clf()
 
 def main ():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     print("Device: ", device)
     model = HGnn(edge_shape=51,
-                 node_shape=8,
+                 node_shape=2, #8
                  u_shape=10,
-                 embed_size=[40, 20, 10],
-                 ham_graph_emb=[10, 10, 10],
-                 n_blocks=10)
+                 embed_size=[20, 10, 5],
+                 ham_graph_emb=[5, 5, 5],
+                 n_blocks=1)
     model.to(device)
 
-    training_data = torch.load('BN_database/Graphs/aBN.pt', )
+    training_data = torch.load('BN_database/Graphs/aBN_noxyz.pt', )
     #TODO:Solve batch problem
     # At the moment it crushes for batch !=1 .
 
@@ -183,14 +188,14 @@ def main ():
     train_dataloader = DataLoader(training_data, batch_size=3, shuffle=True, )
     val_loader = None
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.05)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.007)
     trainer = Trainer(model,
                       train_loader=train_dataloader,
                       val_loader=val_loader,
-                      loss_fn=ham_difference,
+                      loss_fn=hop_on_difference,
                       optimizer=optimizer,
                       device=device)
-    model = trainer.train(num_epochs=100)
+    model = trainer.train(num_epochs=200)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0.005)
     trainer = Trainer(model,
@@ -201,53 +206,14 @@ def main ():
                       device=device)
     model = trainer.train(num_epochs=500)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.05)
-    train_dataloader = DataLoader(training_data, batch_size=10, shuffle=True, )
-    trainer = Trainer(model,
-                      train_loader=train_dataloader,
-                      val_loader=val_loader,
-                      loss_fn= hop_on_difference,
-                      optimizer=optimizer,
-                      device=device)
-    model = trainer.train(num_epochs=500)
-
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.005)
-    trainer = Trainer(model,
-                      train_loader=train_dataloader,
-                      val_loader=val_loader,
-                      loss_fn=ham_difference,
-                      optimizer=optimizer,
-                      device=device)
-    model = trainer.train(num_epochs=700)
-
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.0006)
-    train_dataloader = DataLoader(training_data, batch_size=10, shuffle=True, )
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.007)
     trainer = Trainer(model,
                       train_loader=train_dataloader,
                       val_loader=val_loader,
                       loss_fn=hop_on_difference,
                       optimizer=optimizer,
                       device=device)
-    model = trainer.train(num_epochs=1000)
-
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.005)
-    trainer = Trainer(model,
-                      train_loader=train_dataloader,
-                      val_loader=val_loader,
-                      loss_fn=ham_difference,
-                      optimizer=optimizer,
-                      device=device)
-    model = trainer.train(num_epochs=700)
-
-    train_dataloader = DataLoader(training_data, batch_size=1, shuffle=True, )
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.005)
-    trainer = Trainer(model,
-                      train_loader=train_dataloader,
-                      val_loader=val_loader,
-                      loss_fn=hop_on_difference,
-                      optimizer=optimizer,
-                      device=device)
-    model = trainer.train(num_epochs=700)
+    model = trainer.train(num_epochs=2100)
 
     # Now let´s see the results:
     train_dataloader = DataLoader(training_data, batch_size=1, shuffle=True)
@@ -261,7 +227,7 @@ def main ():
         bond_batch = inputs.bond_batch.to(device)
         hii, hij, ij = model(x, edge_index, edge_attr, state, batch.to(trainer.device),
                              bond_batch.to(trainer.device))
-        print("hij:", hij)
+        #print("hij:", hij)
         hii = hii.to("cpu")
         hij = hij.to("cpu")
         ij = ij.to("cpu")
@@ -291,9 +257,11 @@ def main ():
 
         path = "BN_database/rezults"
         plot_matrx(target_mat_r, name=f'{ko}_tar_rmag.png', path=path)
+
         plot_matrx(pred_mat_r, name=f'{ko}_pred_rmag.png', path=path)
 
         plot_matrx(dif_mat_r, name=f'{ko}_dif_real.png', path=path)
+
         plot_matrx(dif_mat_i, name=f'{ko}_dif_imag.png', path=path)
         print("Done")
         print("maxx:",dif_mat_r.max() )
@@ -311,7 +279,7 @@ def main ():
             for line in mat:
                 np.savetxt(f, line, fmt='%.3f')
 
-        if ko == 100:
+        if ko == 3:
             break
 
 if __name__ == "__main__":

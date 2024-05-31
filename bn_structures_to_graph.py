@@ -229,28 +229,21 @@ def info_to_graph(info):
         nod_px.extend(atomic_number)
         nod_py.extend(atomic_number)
         nod_pz.extend(atomic_number)
+
         # orbitals
         nod_s.extend([1])
         nod_px.extend([2])
         nod_py.extend([3])
         nod_pz.extend([4])
+
         # position
         position= atom["position"]
-        nod_s.extend(position)
-        nod_px.extend(position)
-        nod_py.extend(position)
-        nod_pz.extend(position)
-        # forces
-        forces=atom["forces"]
-        nod_s.extend(forces)
-        nod_px.extend(forces)
-        nod_py.extend(forces)
-        nod_pz.extend(forces)
-
-        node_features.append(nod_s)
-        node_features.append(nod_px)
-        node_features.append(nod_py)
-        node_features.append(nod_pz)
+        #nod_s.extend(position)
+        #nod_px.extend(position)
+        #nod_py.extend(position)
+        #nod_pz.extend(position)
+       
+        
 
 
         #onsite
@@ -264,6 +257,15 @@ def info_to_graph(info):
         node_target.append(on_px)
         node_target.append(on_py)
         node_target.append(on_pz)
+
+        nod_s.extend(on_s)
+        nod_px.extend(on_px)
+        nod_py.extend(on_py)
+        nod_pz.extend(on_pz)
+        node_features.append(nod_s)
+        node_features.append(nod_px)
+        node_features.append(nod_py)
+        node_features.append(nod_pz)
 
 
     node_features = tr.tensor(node_features, dtype=tr.float32)
@@ -289,16 +291,14 @@ def info_to_graph(info):
         atom_b = info["structure"]["atoms"][int(b / 4)]
         coord_a=tr.tensor(atom_a["position"])
         coord_b=tr.tensor(atom_b["position"])
-        forces_a=atom_a["forces"]
-        forces_b=atom_b["forces"]
+       
 
         # print("ca",coord_a)
         distance = [np.sqrt(sum([s ** 2 for s in coord_a - coord_b]))]
         bassel_distance = bessel_distance(coord_a, coord_b, n=[i for i in range(1, 9)])
         spherical = spherical_harmonics(coord_a, coord_b,max_l=7)  # spherical_harmonics(na_s.get_coord(), na_s.get_coord())
 
-        # TODO: add forces if needed
-        # Add forces
+        
 
         edge_prop.extend(distance)
         edge_prop.extend(bassel_distance)
@@ -372,7 +372,7 @@ class MaterialDS(tr.utils.data.Dataset):
 def main():
     dname = "aBN"
     directory_path = f'BN_database/Hams_noPBC/{dname}'
-    xyz= f'BN_database/structures-20240403T095638Z-001/structures/{dname}'
+    xyz= f'BN_database/structures/{dname}'
     files = list_files(directory_path)
     print(files)
 
@@ -400,7 +400,7 @@ def main():
         graphs.append(graph)
 
     material_ds = MaterialDS(graphs)
-    tr.save(material_ds, f'BN_database/Graphs/{dname}.pt')
+    tr.save(material_ds, f'BN_database/Graphs/{dname}_noxyz_trick.pt')
     return 0
 
 
