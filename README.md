@@ -1,4 +1,6 @@
-# HamiltonianWizard
+# HamiltonianMagic
+
+
 
 
  
