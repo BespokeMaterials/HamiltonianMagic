@@ -1,0 +1,66 @@
+atomiccoordinatesformat Ang
+cdfsave True
+dminitspinaf False
+dmmixingweight 0.025
+dmmixscf1 True
+dmnumberpulay 10
+dmtolerance 1e-05
+electronictemperature 50.000 K
+geometrymustconverge T
+latticeconstant 1.0 Ang
+maxscfiterations 1000
+meshcutoff 400 Ry
+noncollinearspin False
+numberofatoms 8
+numberofspecies 1
+savehs True
+solutionmethod diagon
+spinorbit False
+spinpolarized False
+systemlabel aiida
+systemname aiida
+usetreetimer T
+writedmhsnetcdf True
+writeorbmom True
+xcauthors PBEsol
+xcfunctional GGA
+xmlwrite T
+#
+# -- Basis Set Info follows
+#
+PAO-BasisSize DZP
+PAO-SplitNorm 0.15
+PAO-EnergyShift 0.005 Ry
+#
+# -- Structural Info follows
+#
+%block chemicalspecieslabel
+    1     6      C
+%endblock chemicalspecieslabel
+%block lattice-vectors
+      4.2017800000       0.0000000000       0.0000000000
+      0.0000000000       2.6259000000       0.0000000000
+      0.0000000000       0.0000000000       7.4629900000
+%endblock lattice-vectors
+%block atomiccoordinatesandatomicspecies
+      0.0063026700       0.0118953270       0.0144035707    1      C      1
+      0.6998484768       1.4135744880       7.4628407402    1      C      2
+      2.8204448250       0.0013654680       0.0025374166    1      C      3
+      2.1122348060       1.4236842030       0.0132841222    1      C      4
+      0.0004621958       2.6253485610       3.6302968556    1      C      5
+      0.6998484768       1.4135744880       3.6302968556    1      C      6
+      2.8007384768       2.6253485610       3.6302968556    1      C      7
+      2.1013521958       1.4135744880       3.6302968556    1      C      8
+%endblock atomiccoordinatesandatomicspecies
+#
+# -- K-points Info follows
+#
+%block kgrid_monkhorst_pack
+    10      0      0       0.0000000000
+     0     10      0       0.0000000000
+     0      0     10       0.0000000000
+%endblock kgrid_monkhorst_pack
+#
+# -- Max wall-clock time block
+#
+maxwalltime 7200000

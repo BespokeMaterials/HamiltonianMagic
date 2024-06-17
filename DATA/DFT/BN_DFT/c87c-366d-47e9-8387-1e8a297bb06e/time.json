@@ -1,0 +1,135 @@
+{
+ "global_section": { "_calls": 1, "_time":       10.616, "_%":   100.00,
+   "siesta": { "_calls": 1, "_time":       10.616, "_%":   100.00,
+     "Setup": { "_calls": 1, "_time":        0.136, "_%":     1.28,
+       "bands": { "_calls": 1, "_time":        0.000, "_%":     0.00},
+       "KSV_init": { "_calls": 1, "_time":        0.000, "_%":     0.00}
+     },
+     "IterGeom": { "_calls": 1, "_time":       10.472, "_%":    98.65,
+       "geom_init": { "_calls": 1, "_time":        0.610, "_%":     5.75,
+         "state_init": { "_calls": 1, "_time":        0.035, "_%":     0.33,
+           "hsparse": { "_calls": 1, "_time":        0.000, "_%":     0.00},
+           "overlap": { "_calls": 1, "_time":        0.020, "_%":     0.19}
+         },
+         "Setup_H0": { "_calls": 1, "_time":        0.547, "_%":     5.16,
+           "naefs": { "_calls": 1, "_time":        0.000, "_%":     0.00},
+           "MolMec": { "_calls": 1, "_time":        0.000, "_%":     0.00},
+           "kinefsm": { "_calls": 1, "_time":        0.016, "_%":     0.15},
+           "nlefsm": { "_calls": 1, "_time":        0.193, "_%":     1.82},
+           "DHSCF_Init": { "_calls": 1, "_time":        0.338, "_%":     3.18,
+             "DHSCF1": { "_calls": 1, "_time":        0.044, "_%":     0.42,
+               "INITMESH": { "_calls": 1, "_time":        0.000, "_%":     0.00}
+             },
+             "DHSCF2": { "_calls": 1, "_time":        0.294, "_%":     2.77,
+               "REMESH": { "_calls": 1, "_time":        0.129, "_%":     1.21,
+                 "INITMESH": { "_calls": 2, "_time":        0.067, "_%":     0.64,
+                   "SPLOAD": { "_calls": 2, "_time":        0.067, "_%":     0.63}
+                 }
+               },
+               "REORD": { "_calls": 2, "_time":        0.000, "_%":     0.00},
+               "PHION": { "_calls": 1, "_time":        0.113, "_%":     1.06},
+               "COMM_BSC": { "_calls": 1, "_time":        0.000, "_%":     0.00},
+               "POISON": { "_calls": 1, "_time":        0.001, "_%":     0.01,
+                 "fft": { "_calls": 2, "_time":        0.001, "_%":     0.01}
+               }
+             }
+           }
+         },
+         "setup_H": { "_calls": 1, "_time":        0.028, "_%":     0.27,
+           "DHSCF": { "_calls": 1, "_time":        0.028, "_%":     0.27,
+             "DHSCF3": { "_calls": 1, "_time":        0.028, "_%":     0.27,
+               "rhoofd": { "_calls": 1, "_time":        0.012, "_%":     0.11},
+               "COMM_BSC": { "_calls": 2, "_time":        0.002, "_%":     0.02},
+               "POISON": { "_calls": 1, "_time":        0.001, "_%":     0.01,
+                 "fft": { "_calls": 2, "_time":        0.001, "_%":     0.01}
+               },
+               "XC": { "_calls": 1, "_time":        0.005, "_%":     0.05,
+                 "COMM_BSC": { "_calls": 2, "_time":        0.000, "_%":     0.00},
+                 "GXC-CellXC": { "_calls": 1, "_time":        0.005, "_%":     0.05,
+                   "gridxc@cellXC": { "_calls": 1, "_time":        0.005, "_%":     0.05}
+                 }
+               },
+               "vmat": { "_calls": 1, "_time":        0.008, "_%":     0.08}
+             }
+           }
+         }
+       },
+       "IterSCF": { "_calls": 18, "_time":        9.768, "_%":    92.02,
+         "compute_dm": { "_calls": 18, "_time":        9.282, "_%":    87.44,
+           "diagon": { "_calls": 18, "_time":        9.282, "_%":    87.44,
+             "c-eigval": { "_calls": 2376, "_time":        4.529, "_%":    42.66,
+               "c-buildHS": { "_calls": 2376, "_time":        0.035, "_%":     0.33},
+               "cdiag": { "_calls": 2376, "_time":        4.492, "_%":    42.32,
+                 "cdiag1": { "_calls": 2376, "_time":        0.428, "_%":     4.03},
+                 "cdiag2": { "_calls": 2376, "_time":        0.936, "_%":     8.81},
+                 "cdiag3": { "_calls": 2376, "_time":        3.015, "_%":    28.40}
+               }
+             },
+             "c-eigvec": { "_calls": 2376, "_time":        4.689, "_%":    44.17,
+               "cdiag": { "_calls": 2376, "_time":        4.654, "_%":    43.84,
+                 "cdiag1": { "_calls": 2376, "_time":        0.428, "_%":     4.03},
+                 "cdiag2": { "_calls": 2376, "_time":        0.945, "_%":     8.90},
+                 "cdiag3": { "_calls": 2376, "_time":        3.029, "_%":    28.54},
+                 "cdiag4": { "_calls": 2376, "_time":        0.142, "_%":     1.33}
+               }
+             },
+             "c-buildD": { "_calls": 2376, "_time":        0.060, "_%":     0.56}
+           }
+         },
+         "setup_H": { "_calls": 18, "_time":        0.478, "_%":     4.50,
+           "DHSCF": { "_calls": 18, "_time":        0.477, "_%":     4.50,
+             "DHSCF3": { "_calls": 18, "_time":        0.477, "_%":     4.50,
+               "rhoofd": { "_calls": 18, "_time":        0.171, "_%":     1.61},
+               "COMM_BSC": { "_calls": 36, "_time":        0.038, "_%":     0.36},
+               "POISON": { "_calls": 18, "_time":        0.012, "_%":     0.12,
+                 "fft": { "_calls": 36, "_time":        0.011, "_%":     0.11}
+               },
+               "XC": { "_calls": 18, "_time":        0.115, "_%":     1.08,
+                 "COMM_BSC": { "_calls": 36, "_time":        0.003, "_%":     0.02},
+                 "GXC-CellXC": { "_calls": 18, "_time":        0.112, "_%":     1.06,
+                   "gridxc@cellXC": { "_calls": 18, "_time":        0.112, "_%":     1.06}
+                 }
+               },
+               "vmat": { "_calls": 18, "_time":        0.139, "_%":     1.31}
+             }
+           }
+         },
+         "MIXER": { "_calls": 17, "_time":        0.001, "_%":     0.01}
+       },
+       "PostSCF": { "_calls": 1, "_time":        0.093, "_%":     0.87,
+         "naefs": { "_calls": 1, "_time":        0.000, "_%":     0.00},
+         "kinefsm": { "_calls": 1, "_time":        0.000, "_%":     0.00},
+         "nlefsm": { "_calls": 1, "_time":        0.002, "_%":     0.02},
+         "DHSCF": { "_calls": 1, "_time":        0.085, "_%":     0.80,
+           "DHSCF3": { "_calls": 1, "_time":        0.027, "_%":     0.25,
+             "rhoofd": { "_calls": 1, "_time":        0.009, "_%":     0.08},
+             "COMM_BSC": { "_calls": 2, "_time":        0.003, "_%":     0.03},
+             "POISON": { "_calls": 1, "_time":        0.001, "_%":     0.01,
+               "fft": { "_calls": 2, "_time":        0.001, "_%":     0.01}
+             },
+             "XC": { "_calls": 1, "_time":        0.007, "_%":     0.07,
+               "COMM_BSC": { "_calls": 2, "_time":        0.000, "_%":     0.00},
+               "GXC-CellXC": { "_calls": 1, "_time":        0.007, "_%":     0.07,
+                 "gridxc@cellXC": { "_calls": 1, "_time":        0.007, "_%":     0.07}
+               }
+             },
+             "vmat": { "_calls": 1, "_time":        0.007, "_%":     0.06}
+           },
+           "DHSCF4": { "_calls": 1, "_time":        0.059, "_%":     0.55,
+             "REORD": { "_calls": 10, "_time":        0.000, "_%":     0.00},
+             "COMM_BSC": { "_calls": 2, "_time":        0.000, "_%":     0.00},
+             "dfscf": { "_calls": 1, "_time":        0.034, "_%":     0.32}
+           }
+         },
+         "overfsm": { "_calls": 1, "_time":        0.000, "_%":     0.00},
+         "MolMec": { "_calls": 1, "_time":        0.000, "_%":     0.00},
+         "writeHSX": { "_calls": 1, "_time":        0.000, "_%":     0.00}
+       },
+       "state_analysis": { "_calls": 1, "_time":        0.000, "_%":     0.00},
+       "siesta_move": { "_calls": 1, "_time":        0.000, "_%":     0.00}
+     },
+     "Analysis": { "_calls": 1, "_time":        0.006, "_%":     0.06,
+       "optical": { "_calls": 1, "_time":        0.000, "_%":     0.00}
+     }
+   }
+ }}

@@ -1,0 +1,91 @@
+atomiccoordinatesformat Ang
+cdfsave True
+dminitspinaf False
+dmmixingweight 0.025
+dmmixscf1 True
+dmnumberpulay 10
+dmtolerance 1e-05
+electronictemperature 50.000 K
+geometrymustconverge T
+latticeconstant 1.0 Ang
+maxscfiterations 1000
+meshcutoff 400 Ry
+noncollinearspin False
+numberofatoms 32
+numberofspecies 2
+savehs True
+solutionmethod diagon
+spinorbit False
+spinpolarized False
+systemlabel aiida
+systemname aiida
+usetreetimer T
+writedmhsnetcdf True
+writeorbmom True
+xcauthors PBEsol
+xcfunctional GGA
+xmlwrite T
+#
+# -- Basis Set Info follows
+#
+PAO-BasisSize DZP
+PAO-SplitNorm 0.15
+PAO-EnergyShift 0.005 Ry
+#
+# -- Structural Info follows
+#
+%block chemicalspecieslabel
+    1     7      N
+    2     6      C
+%endblock chemicalspecieslabel
+%block lattice-vectors
+      5.8994400000       0.0000000000       0.0000000000
+      0.0000000000       5.8994400000       0.0000000000
+      0.0000000000       0.0000000000       5.8994400000
+%endblock lattice-vectors
+%block atomiccoordinatesandatomicspecies
+      4.0224151752       2.2219650816       1.2779366928    1      N      1
+      0.4754358696       2.6413562712       1.6307232048    1      N      2
+      5.8819776576       2.1988392768       0.6830961576    1      N      3
+      1.9254592272       3.9274931856       0.6018018744    1      N      4
+      1.3927397952       2.0292893712       2.2219060872    1      N      5
+      2.4442559808       0.5351382024       0.5174988768    1      N      6
+      5.7512460672       1.3829467248       4.6709996088    1      N      7
+      1.5376890360       3.2130710016       2.6497924704    1      N      8
+      5.2835384640       1.2558137928       1.6752639768    1      N      9
+      4.2391016064       1.6179214200       0.3667681848    1      N     10
+      4.8299895168       0.0182292696       4.4336651376    1      N     11
+      4.3104848304       4.8880400064       3.2796166848    1      N     12
+      0.9522876048       4.3616329752       0.4934881560    1      N     13
+      4.6652771520       3.6885658656       2.9196918504    1      N     14
+      2.1239753832       4.3057652784       4.7679864024    1      N     15
+      5.8307115240       0.6694094568       0.2569206120    1      N     16
+      4.1247704592       4.1977465320       4.6558380480    1      N     17
+      4.9465034568       4.8567729744       4.1347405128    1      N     18
+      3.2827433880       0.5940736080       1.8357287448    2      C     19
+      1.0479765216       3.4717614456       4.4986769664    2      C     20
+      2.0136558552       5.4922606512       4.2445290912    2      C     21
+      1.7730176976       1.1581780608       5.0450830992    2      C     22
+      1.0729311528       5.4519674760       5.1320998392    2      C     23
+      0.9573021288       1.7547294336       5.7989135424    2      C     24
+      3.8089144416       1.3503228216       4.7791363440    2      C     25
+      3.0062956296       4.0763950512       0.0103830144    2      C     26
+      4.0040089224       2.4567627936       3.2770799256    2      C     27
+      5.8454601240       3.9746887056       2.4197733048    2      C     28
+      3.7967615952       5.6655861984       5.5216988568    2      C     29
+      4.2646461816       3.6185985072       0.2330868744    2      C     30
+      3.6069766104       0.2927892072       2.9656484880    2      C     31
+      0.0883736112       3.4705815576       5.4168658080    2      C     32
+%endblock atomiccoordinatesandatomicspecies
+#
+# -- K-points Info follows
+#
+%block kgrid_monkhorst_pack
+     6      0      0       0.0000000000
+     0      6      0       0.0000000000
+     0      0      6       0.0000000000
+%endblock kgrid_monkhorst_pack
+#
+# -- Max wall-clock time block
+#
+maxwalltime 7200000
