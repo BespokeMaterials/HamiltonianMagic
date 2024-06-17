@@ -2,10 +2,12 @@
 Convert the data from the DFT to more friendly and readable format.
 Is a parser for aiida.fdf files
 """
+import numpy as np
 from sisl import get_sile
 from utils import (list_subdirectories,
                    create_directory_if_not_exists,
-                   save_dict_to_json)
+                   save_dict_to_json,
+                   generate_heatmap)
 from tqdm import tqdm
 
 
@@ -79,7 +81,11 @@ def parse_atomic_file(file_path):
 
 
 def construct_json_from_fdf(fdf_path):
-    print(fdf_path)
+    """
+    :param fdf_path: Path to the input file aida.fdf
+    :return: A dictionary with structure information.
+    """
+
     fdf = get_sile(fdf_path)
     h = fdf.read_hamiltonian()
     hmat = h.Hk([0, 0, 0]).todense()
@@ -92,33 +98,38 @@ def construct_json_from_fdf(fdf_path):
     atoms = []
     for i, simbol in enumerate(atomic_info["atomic_symbols"]):
         atom = {
-            "simbol": simbol,
+            "simbol": str(simbol),
             "xyz": atomic_info['atomic_coordinates'][i],
-            "nr_orbitals": atomic_symbols[atomic_info['atomic_types'][i] - 1],
+            "nr_orbitals": len(atomic_symbols[atomic_info['atomic_types'][i] - 1]),
         }
         atoms.append(atom)
 
     data = {
         "structure": {
-            "lattice vectors": lattice_vectors,
+            "lattice vectors": lattice_vectors.tolist(),
             "atoms": atoms
         },
-        "hmat": hmat,
-        "smat": smat
+        "hmat": hmat.tolist(),
+        "smat": smat.tolist()
     }
     return data
 
 
 def parse_dft(dft_path, json_path):
     create_directory_if_not_exists(json_path)
+    create_directory_if_not_exists(f"{json_path}_img")
 
     dft_reg = list_subdirectories(dft_path)
     for sample in tqdm(dft_reg):
         path = f"{dft_path}/{sample}/aiida.fdf"
         json_dc = construct_json_from_fdf(path)
-        save_dict_to_json(json_dc, f"{json_path}/{sample}.json")ç
-
-
+        save_dict_to_json(json_dc, f"{json_path}/{sample}.json")
+        hmat = np.array(json_dc["hmat"])
+        filename = (f"{json_path}_img/{sample}_hmat.png")
+        generate_heatmap(hmat, filename, grid1_step=1, grid2_step=13)
+        smat = np.array(json_dc["smat"])
+        filename = f"{json_path}_img/{sample}_smat.png"
+        generate_heatmap(smat, filename, grid1_step=1, grid2_step=13)
 
 
 def main(dft_path, json_path):
