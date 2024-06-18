@@ -150,3 +150,27 @@ def erase_png_files(directory):
             print(f"Error deleting {file_path}: {e}")
 
     return len(png_files)
+
+def read_dict_from_json(file_path):
+    """
+    Reads a dictionary from a JSON file.
+
+    Parameters:
+    file_path (str): The path to the JSON file.
+
+    Returns:
+    dict: The dictionary read from the JSON file.
+    """
+    try:
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+            return data
+    except FileNotFoundError:
+        print(f"Error: The file at {file_path} was not found.")
+        return None
+    except json.JSONDecodeError:
+        print(f"Error: The file at {file_path} is not a valid JSON file.")
+        return None
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return None
