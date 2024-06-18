@@ -8,7 +8,112 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
 import numpy as np
 import glob
+import math
+import torch
 
+## Save spot  ##
+def save_spot(exp_name, spot_nr, model, data):
+    # Create directory
+    create_directory_if_not_exists("EXPERIMENTS")
+    create_directory_if_not_exists(f"EXPERIMENTS/{exp_name}")
+    create_directory_if_not_exists(f"EXPERIMENTS/{exp_name}/spot{spot_nr}")
+    path = f"EXPERIMENTS/{exp_name}/spot{spot_nr}"
+    path_img = os.path.join(path, "img")
+    create_directory_if_not_exists(path_img)
+    path_txt = os.path.join(path, "txt")
+    create_directory_if_not_exists(path_txt)
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+
+    # Save model
+    torch.save(model.state_dict(), f"{path}/model.pt")
+
+    # Save data
+    for ko, inputs in enumerate(data):
+
+        inputs = inputs.to(device)
+        x = inputs.x.to(torch.float32)
+        edge_index = inputs.edge_index.to(torch.int64)
+        edge_attr = inputs.edge_attr.to(torch.float32)
+        state = inputs.u.to(torch.float32)
+        batch = inputs.batch
+        bond_batch = inputs.bond_batch
+
+        with torch.no_grad():
+            hii, hij, ij = model(x, edge_index, edge_attr, state, batch, bond_batch)
+
+        # Move tensors to CPU for further processing and numpy conversion
+        hii = hii.cpu()
+        hij = hij.cpu()
+        ij = ij.cpu()
+
+        pred_mat_r = torch.zeros([len(hii), len(hii)])
+        pred_mat_i = torch.zeros([len(hii), len(hii)])
+        for i, hi in enumerate(hii):
+            pred_mat_r[i][i] = hi[0]
+            pred_mat_i[i][i] = hi[1]
+
+        for i, hx in enumerate(hij):
+            pred_mat_r[ij[0][i]][ij[1][i]] = hx[0]
+            pred_mat_i[ij[0][i]][ij[1][i]] = hx[1]
+
+        target_mat_r = torch.zeros([len(hii), len(hii)])
+        target_mat_i = torch.zeros([len(hii), len(hii)])
+        for i, hi in enumerate(inputs.onsite):
+            target_mat_r[i][i] = hi[0]
+            target_mat_i[i][i] = hi[1]
+        for i, hx in enumerate(inputs.hop):
+            target_mat_r[ij[0][i]][ij[1][i]] = hx[0]
+            target_mat_i[ij[0][i]][ij[1][i]] = hx[1]
+
+        dif_mat_i = target_mat_i - pred_mat_i
+        dif_mat_r = target_mat_r - pred_mat_r
+
+
+
+        target_mat_r = target_mat_r.detach().numpy()
+        pred_mat_r = pred_mat_r.detach().numpy()
+        dif_mat_r = dif_mat_r.detach().numpy()
+        dif_mat_i = dif_mat_i.detach().numpy()
+        pred_mat_i=pred_mat_i.detach().numpy()
+        target_mat_i=target_mat_i.detach().numpy()
+        generate_heatmap(target_mat_r, filename=f'{path_img}/{ko}_tar_hmat.png')
+        generate_heatmap(pred_mat_r, filename=f'{path_img}/{ko}_pred_hmat.png')
+        generate_heatmap(dif_mat_r, filename=f'{path_img}/{ko}_dif_hmat.png')
+
+        generate_heatmap(dif_mat_i, filename=f'{path_img}/{ko}_dif_smat.png')
+        generate_heatmap(pred_mat_i, filename=f'{path_img}/{ko}_pred_smat.png')
+        generate_heatmap(target_mat_i, filename=f'{path_img}/{ko}_target_smat.png')
+
+        print("Done")
+        print("max:", dif_mat_r.max())
+        print("min:", dif_mat_r.min())
+
+
+        np.save(os.path.join(path_txt, f'{ko}_dif_mat_hmat.npy'), dif_mat_r)
+        np.save(os.path.join(path_txt, f'{ko}_target_mat_hmat.npy'), target_mat_r)
+        np.save(os.path.join(path_txt, f'{ko}_pred_mat_hmat.npy'), pred_mat_r)
+
+        np.save(os.path.join(path_txt, f'{ko}_dif_mat_smat.npy'), dif_mat_i)
+        np.save(os.path.join(path_txt, f'{ko}_target_mat_smat.npy'), target_mat_i)
+        np.save(os.path.join(path_txt, f'{ko}_pred_mat_smat.npy'), pred_mat_i)
+
+        print("Done")
+
+
+
+def nan_checker(lst):
+    """
+    Check if there are any NaN values in the list.
+
+    Parameters:
+    lst (list): The list to check for NaN values.
+
+    Returns:
+    bool: True if there is at least one NaN value in the list, False otherwise.
+    """
+    return any(math.isnan(x) for x in lst)
 
 def generate_heatmap(matrix, filename, grid1_step=1, grid2_step=13):
     """
@@ -21,7 +126,11 @@ def generate_heatmap(matrix, filename, grid1_step=1, grid2_step=13):
     """
     # Determine the min and max values of the matrix
     min_val = np.min(matrix)
+    if min_val >=0:
+        min_val=-0.1
     max_val = np.max(matrix)
+    if max_val <=0:
+        max_val=+0.1
 
     # Create the heatmap
     plt.figure()

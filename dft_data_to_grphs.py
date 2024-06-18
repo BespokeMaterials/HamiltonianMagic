@@ -10,7 +10,7 @@ from torch_geometric.data import Data
 from scipy.special import sph_harm
 from mendeleev import element
 from tqdm import tqdm
-from utils import list_files_in_directory, create_directory_if_not_exists, read_dict_from_json
+from utils import list_files_in_directory, create_directory_if_not_exists, read_dict_from_json, nan_checker
 
 
 ## Fundamental graph elements and transformations ##
@@ -202,7 +202,10 @@ def get_nodes_from_structure(structure):
             nod = []
 
             atomic_number = [element_to_atomic_number(atom["simbol"])]
+
             nod.extend(atomic_number)
+            nod.extend([orbit])
+
 
             # position-> kils equivariance
             # position = atom["position"]
@@ -258,18 +261,18 @@ def get_edges_from_structure(structure, max_r=10):
 
             # print("ca",coord_a)
             distance = [distance_[a][b]]
-            if distance!=0:
+            if distance[0]!=0:
                 bassel_distance = bessel_distance(coord_a, coord_b, n=[i for i in range(1, 9)])
-                spherical = spherical_harmonics(coord_a, coord_b,
-                                            max_l=7)  # spherical_harmonics(na_s.get_coord(), na_s.get_coord())
+                spherical = spherical_harmonics(coord_a, coord_b,max_l=7)
             else:
                 bassel_distance=[0 for _ in range(8)]
                 spherical = [0 for _ in range(42)]
 
-            #print("distance:", distance)
-            #print("bassel_distance:", len(bassel_distance))
-            #print("spherical",len(spherical))
-            #print("spherical", spherical)
+            # print("distance:", distance)
+            # print("bassel_distance:", len(bassel_distance))
+            # print("spherical",len(spherical))
+            # print("spherical", nan_checker(spherical))
+            # print("bassel", nan_checker(bassel_distance))
             edge_prop.extend(distance)
             edge_prop.extend(bassel_distance)
             edge_prop.extend(spherical)
@@ -280,11 +283,11 @@ def get_edges_from_structure(structure, max_r=10):
             hopp = [structure["hmat"][a][b] * 100, structure["smat"][a][b] * 100]
             edge_target.append(hopp)
 
-    print(len(edge_props))
+    # print(len(edge_props))
     edge_props = tr.tensor(edge_props, dtype=tr.float32)
 
-    print(len(edge_index[0]))
-    print(len(edge_index[1]))
+    # print(len(edge_index[0]))
+    # print(len(edge_index[1]))
     edge_index = tr.tensor(edge_index, dtype=tr.float32)
     edge_target = tr.tensor(edge_target, dtype=tr.float32)
 
@@ -293,7 +296,7 @@ def get_edges_from_structure(structure, max_r=10):
 
 def get_global_from_structure(structure):
     # Global propriety:
-    lattice_vectors = structure["structure"]['lattice_vectors']
+    lattice_vectors = structure["structure"]['lattice vectors']
     print("lat vectors:", lattice_vectors)
     atom_xyz = structure["structure"]["atoms"]
     global_prop = [len(atom_xyz),
@@ -338,7 +341,7 @@ def main(files_path, test_ratio, saving_spot, radius):
 
     # Extract structure and build the graph
     structures = [read_dict_from_json(f"{files_path}/{st}") for st in files]
-    structures = structures[:5]
+    #structures = structures[:5]
     graphs = [structure_to_graph(structure, radius) for structure in tqdm(structures)]
 
     train_ds = MaterialDS(graphs[:int(1 - len(graphs) * test_ratio)])
