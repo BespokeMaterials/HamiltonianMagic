@@ -9,7 +9,7 @@ from dft_data_to_grphs import MaterialDS, MaterialMesh, MyTensor
 import torch
 from utils import save_spot, create_directory_if_not_exists
 import os
-
+torch.set_float32_matmul_precision('high')
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 ## Cost functions ##
@@ -97,7 +97,7 @@ def ham_difference(ham_target_, ham_pred_):
 
 def main(exp_name,train_data_path,test_data_path):
     create_directory_if_not_exists(f"EXPERIMENTS/{exp_name}")
-    log_dir = f"{exp_name}/lightning_logs/"
+    log_dir = f"EXPERIMENTS/{exp_name}/lightning_logs/"
     create_directory_if_not_exists(log_dir)
 
     logger = TensorBoardLogger(save_dir=log_dir, name=exp_name)
@@ -106,7 +106,7 @@ def main(exp_name,train_data_path,test_data_path):
                     u_shape=10,
                     embed_size=[20, 20, 10],
                     ham_output_size=[2,2,1],
-                    orbital_blocks=3,
+                    orbital_blocks=2,
                     pair_interaction_blocks=2,
                     onsite_depth=2,
                     ofsite_depth=2)
@@ -116,27 +116,66 @@ def main(exp_name,train_data_path,test_data_path):
 
     training_data = torch.load(train_data_path )
     test_data = torch.load(test_data_path )
-    train_dataloader = DataLoader(test_data, batch_size=1, shuffle=True, )
+    train_dataloader = DataLoader(test_data, batch_size=2, shuffle=True, )
     test_dataloader = DataLoader(training_data, batch_size=1, shuffle=False, )
-    val_check_interval =2 #int(len(train_dataloader))
+    val_check_interval =2
 
-
+    #Spot 1
     model.loss_function = hop_on_difference
-    trainer = pl.Trainer(max_epochs = 2,
+    trainer = pl.Trainer(max_epochs = 100,
                          val_check_interval=val_check_interval, 
                          logger=logger)
-    trainer.fit(model, train_dataloader, test_dataloader)
-    model=trainer.model
+    trainer.fit(model, train_dataloader, None)
+    # model=trainer.model
 
     save_spot(model=model,
               exp_name=exp_name,
               spot_nr=1,
               data=test_dataloader)
 
+    # Spot 2
+    model.loss_function = ham_difference
+    trainer = pl.Trainer(max_epochs=500,
+                         val_check_interval=val_check_interval,
+                         logger=logger)
+    trainer.fit(model, train_dataloader, None)
+    # model = trainer.model
+
+    save_spot(model=model,
+              exp_name=exp_name,
+              spot_nr=2,
+              data=test_dataloader)
+
+    # Spot 3
+    model.loss_function = hop_on_difference
+    trainer = pl.Trainer(max_epochs=200,
+                         val_check_interval=val_check_interval,
+                         logger=logger)
+    trainer.fit(model, train_dataloader, None)
+    # model = trainer.model
+
+    save_spot(model=model,
+              exp_name=exp_name,
+              spot_nr=3,
+              data=test_dataloader)
+
+    # Spot 4
+    model.loss_function = ham_difference
+    trainer = pl.Trainer(max_epochs=2000,
+                         val_check_interval=val_check_interval,
+                         logger=logger)
+    trainer.fit(model, train_dataloader, None)
+    # model = trainer.model
+
+    save_spot(model=model,
+              exp_name=exp_name,
+              spot_nr=4,
+              data=test_dataloader)
+
 
 
 if __name__ == "__main__":
-    exp_name = "test_hw_model_100"
+    exp_name = "HW_model_mixt4_spots"
     train_data_path = "DATA/DFT/BN_DFT_GRAPH/test.pt"
     test_data_path = "DATA/DFT/BN_DFT_GRAPH/test.pt"
     main(exp_name, train_data_path, test_data_path)
