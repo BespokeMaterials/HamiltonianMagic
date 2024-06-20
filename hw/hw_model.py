@@ -71,21 +71,21 @@ class HWizard(pl.LightningModule):
             x1, edge_attr1, state1 = module(x1, edge_index, edge_attr1, state1, batch, bond_batch)
 
         # Update onsite
-        x2=x1
-        edge_attr2=edge_attr1
+        x2=x1+x0
+        edge_attr2=edge_attr1+edge_attr0
         state2=state1
-        x2, edge_attr2, state2 = module(x2, edge_index, edge_attr2, state2, batch, bond_batch)
+        x2, edge_attr2, state2 = self.onsite(x2, edge_index, edge_attr2, state2, batch, bond_batch)
 
         # Update ofsite 
-        x3=x1 +x2
-        edge_attr3=edge_attr1+edge_attr2
+        x3=x1 +x0
+        edge_attr3=edge_attr1+edge_attr0
         state3=state1+state2
 
         
         for module in self.pair_interaction:
             x3, edge_attr3, state3 = module(x3, edge_index, edge_attr3, state3, batch, bond_batch)
 
-        x3, edge_attr3, state3 = module(x3, edge_index, edge_attr3, state3, batch, bond_batch)
+        x3, edge_attr3, state3 = self.ofsite(x3, edge_index, edge_attr3, state3, batch, bond_batch)
 
 
 
@@ -113,15 +113,23 @@ class HWizard(pl.LightningModule):
     
         ham_ii, ham_ij, ij = self(x, edge_index, edge_attr, state, batch, bond_batch)
         pred = (ham_ii, ham_ij)
-        loss = self.loss_function(pred, targets)  
+        loss = self.loss_function( targets, pred)
         return loss
 
     def training_step(self, batch, batch_idx):
         loss = self._common_ste(batch, batch_idx) 
         #print("loss train:",loss.item()) 
         self.log("loss/train", loss.item())
+        #self.log_unused_parameters()
         return loss
 
+
+    def log_unused_parameters(self):
+        for name, param in self.named_parameters():
+            if param.grad is None:
+                print(f"Parameter {name} is not used in the forward pass.")
+            else:
+                print(f"Parameter {name} is  used in the forward pass.-------")#not used
     def validation_step(self, batch, batch_idx):
         loss = self._common_ste(batch, batch_idx) 
         #print("loss val:",loss.item())  

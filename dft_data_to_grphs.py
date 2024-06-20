@@ -337,6 +337,7 @@ def main(files_path, test_ratio, saving_spot, radius):
 
     # ge the files and shuffle them:
     files = list_files_in_directory(files_path)
+    files=files[:3]
     # shuffle
 
     # Extract structure and build the graph

@@ -82,8 +82,12 @@ def ham_difference(ham_target_, ham_pred_):
     :param ham_pred_:(Tensor)
     :return: (float)
     """
-
+    print("ham_target_", ham_target_[0].shape,ham_target_[1].shape )
+    print("ham_pred_", ham_pred_[0].shape,  ham_pred_[0].shape)
     dif = 0
+    dif_0_=ham_target_[0]-ham_pred_[0]
+    dif_1_ = ham_target_[1] - ham_pred_[1]
+
     for i, ham_target in enumerate(ham_target_):
         ham_pred = ham_pred_[i]
         flattened1 = ham_target
@@ -116,16 +120,24 @@ def main(exp_name,train_data_path,test_data_path):
 
     training_data = torch.load(train_data_path )
     test_data = torch.load(test_data_path )
-    train_dataloader = DataLoader(test_data, batch_size=2, shuffle=True, )
-    test_dataloader = DataLoader(training_data, batch_size=1, shuffle=False, )
-    val_check_interval =2
+    train_dataloader = DataLoader(test_data, batch_size=5, shuffle=True,num_workers=31 )
+    test_dataloader = DataLoader(training_data, batch_size=1, shuffle=False,num_workers=31 )
+    # Get the number of elements in each dataloader
+    num_train_elements = len(train_dataloader.dataset)
+    num_test_elements = len(test_dataloader.dataset)
+
+    print(f"Number of elements in train_dataloader: {num_train_elements}")
+    print(f"Number of elements in test_dataloader: {num_test_elements}")
+    val_check_interval =1
 
     #Spot 1
     model.loss_function = hop_on_difference
     trainer = pl.Trainer(max_epochs = 100,
                          val_check_interval=val_check_interval, 
-                         logger=logger)
-    trainer.fit(model, train_dataloader, None)
+                         logger=logger,
+                         strategy='ddp_find_unused_parameters_true',
+                         log_every_n_steps=3)
+    trainer.fit(model, train_dataloader, test_dataloader)
     # model=trainer.model
 
     save_spot(model=model,
@@ -133,12 +145,15 @@ def main(exp_name,train_data_path,test_data_path):
               spot_nr=1,
               data=test_dataloader)
 
-    # Spot 2
+    print("# Spot 2")
     model.loss_function = ham_difference
     trainer = pl.Trainer(max_epochs=500,
                          val_check_interval=val_check_interval,
-                         logger=logger)
-    trainer.fit(model, train_dataloader, None)
+                         logger=logger,
+                         strategy='ddp_find_unused_parameters_true',
+                         log_every_n_steps=3
+                         )
+    trainer.fit(model, train_dataloader, test_dataloader)
     # model = trainer.model
 
     save_spot(model=model,
@@ -146,12 +161,15 @@ def main(exp_name,train_data_path,test_data_path):
               spot_nr=2,
               data=test_dataloader)
 
-    # Spot 3
+    print("# Spot 3")
     model.loss_function = hop_on_difference
     trainer = pl.Trainer(max_epochs=200,
                          val_check_interval=val_check_interval,
-                         logger=logger)
-    trainer.fit(model, train_dataloader, None)
+                         logger=logger,
+                         strategy='ddp_find_unused_parameters_true',
+                         log_every_n_steps=3
+                         )
+    trainer.fit(model, train_dataloader, test_dataloader)
     # model = trainer.model
 
     save_spot(model=model,
@@ -159,11 +177,14 @@ def main(exp_name,train_data_path,test_data_path):
               spot_nr=3,
               data=test_dataloader)
 
-    # Spot 4
+    print("# Spot 4")
     model.loss_function = ham_difference
     trainer = pl.Trainer(max_epochs=2000,
                          val_check_interval=val_check_interval,
-                         logger=logger)
+                         logger=logger,
+                         strategy='ddp_find_unused_parameters_true',
+                         log_every_n_steps=3
+                         )
     trainer.fit(model, train_dataloader, None)
     # model = trainer.model
 
@@ -177,5 +198,5 @@ def main(exp_name,train_data_path,test_data_path):
 if __name__ == "__main__":
     exp_name = "HW_model_mixt4_spots"
     train_data_path = "DATA/DFT/BN_DFT_GRAPH/test.pt"
-    test_data_path = "DATA/DFT/BN_DFT_GRAPH/test.pt"
+    test_data_path = "DATA/DFT/BN_DFT_GRAPH/train.pt"
     main(exp_name, train_data_path, test_data_path)
