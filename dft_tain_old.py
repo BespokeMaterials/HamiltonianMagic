@@ -286,12 +286,13 @@ def main(exp_name, train_data_path, test_data_path):
                  embed_size=[20, 20, 10],
                  ham_graph_emb=[7, 7, 7],
                  n_blocks=3)
+    model.load_state_dict(torch.load('EXPERIMENTS/Classic_mixt_01/spot3/model.pt'))
     model.to(device)
 
     training_data = torch.load(train_data_path, )
     test_data = torch.load(test_data_path, )
 
-    train_dataloader = DataLoader(test_data, batch_size=1, shuffle=True, )
+    train_dataloader = DataLoader(test_data, batch_size=2, shuffle=True, )
     test_dataloader = DataLoader(training_data, batch_size=1, shuffle=False, )
     val_loader = None
 
@@ -303,10 +304,10 @@ def main(exp_name, train_data_path, test_data_path):
                       loss_fn=hop_on_difference,
                       optimizer=optimizer,
                       device=device)
-    model = trainer.train(num_epochs=200)
+    model = trainer.train(num_epochs=10)
     save_spot(model=model,
               exp_name=exp_name,
-              spot_nr=1,
+              spot_nr=4,
               data=test_dataloader)
 
     # SPOT B:
@@ -321,7 +322,7 @@ def main(exp_name, train_data_path, test_data_path):
     model = trainer.train(num_epochs=500)
     save_spot(model=model,
               exp_name=exp_name,
-              spot_nr=2,
+              spot_nr=5,
               data=test_dataloader)
 
     # SPOT C:
@@ -329,13 +330,13 @@ def main(exp_name, train_data_path, test_data_path):
     trainer = Trainer(model,
                       train_loader=train_dataloader,
                       val_loader=val_loader,
-                      loss_fn=hop_on_difference,
+                      loss_fn=ham_difference,
                       optimizer=optimizer,
                       device=device)
-    model = trainer.train(num_epochs=200)
+    model = trainer.train(num_epochs=1000)
     save_spot(model=model,
               exp_name=exp_name,
-              spot_nr=3,
+              spot_nr=6,
               data=test_dataloader)
 
     # SPOT D:
@@ -343,13 +344,13 @@ def main(exp_name, train_data_path, test_data_path):
     trainer = Trainer(model,
                       train_loader=train_dataloader,
                       val_loader=val_loader,
-                      loss_fn=ham_difference,
+                      loss_fn=hop_on_difference,
                       optimizer=optimizer,
                       device=device)
-    model = trainer.train(num_epochs=500)
+    model = trainer.train(num_epochs=50)
     save_spot(model=model,
               exp_name=exp_name,
-              spot_nr=4,
+              spot_nr=7,
               data=test_dataloader)
 
     # SPOT E:
@@ -357,18 +358,18 @@ def main(exp_name, train_data_path, test_data_path):
     trainer = Trainer(model,
                       train_loader=train_dataloader,
                       val_loader=val_loader,
-                      loss_fn=hop_on_difference,
+                      loss_fn=ham_difference,
                       optimizer=optimizer,
                       device=device)
     model = trainer.train(num_epochs=1000)
     save_spot(model=model,
               exp_name=exp_name,
-              spot_nr=5,
+              spot_nr=8,
               data=test_dataloader)
 
 
 if __name__ == "__main__":
-    exp_name = "Classic_mixt_00_mini"
+    exp_name = "Classic_mixt_01"
     train_data_path = "DATA/DFT/BN_DFT_GRAPH/test.pt"
-    test_data_path = "DATA/DFT/BN_DFT_GRAPH/test.pt"
+    test_data_path = "DATA/DFT/BN_DFT_GRAPH/train.pt"
     main(exp_name, train_data_path, test_data_path)
