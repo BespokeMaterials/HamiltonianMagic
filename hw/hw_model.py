@@ -40,11 +40,12 @@ class HWizard(pl.LightningModule):
         
 
         # Onsite
-        self.onsite=Onsite(input_dim=embed_size, output_dim=ham_output_size, depth=onsite_depth)
+
+        self.onsite=Onsite(input_dim=[e*2 for e in embed_size], output_dim=ham_output_size, depth=onsite_depth)
         
 
         # Ofsite 
-        self.ofsite=Ofsite(input_dim=embed_size, output_dim=ham_output_size, depth=ofsite_depth)
+        self.ofsite=Ofsite(input_dim=[e*2 for e in embed_size], output_dim=ham_output_size, depth=ofsite_depth)
         
 
 
@@ -71,20 +72,26 @@ class HWizard(pl.LightningModule):
             x1, edge_attr1, state1 = module(x1, edge_index, edge_attr1, state1, batch, bond_batch)
 
         # Update onsite
-        x2=x1+x0
-        edge_attr2=edge_attr1+edge_attr0
-        state2=state1
+        x2=torch.cat((x0, x1), dim=1)
+        # print("x2.shape",x2.shape)
+        edge_attr2=torch.cat((edge_attr0, edge_attr1), dim=1)
+        # print("edge_attr2.shape", edge_attr2.shape)
+        state2=torch.cat((state0, state1), dim=1)
         x2, edge_attr2, state2 = self.onsite(x2, edge_index, edge_attr2, state2, batch, bond_batch)
 
-        # Update ofsite 
-        x3=x1 +x0
-        edge_attr3=edge_attr1+edge_attr0
-        state3=state1+state2
-
-        
+        # Ectra interaction for edge prop
+        x3=x0
+        edge_attr3=edge_attr0
+        state3=state0
         for module in self.pair_interaction:
             x3, edge_attr3, state3 = module(x3, edge_index, edge_attr3, state3, batch, bond_batch)
 
+
+
+        # Update ofsite
+        x3 = torch.cat((x3, x1), dim=1)
+        edge_attr3 = torch.cat((edge_attr3, edge_attr0), dim=1)
+        state3 = torch.cat((state3, state0), dim=1)
         x3, edge_attr3, state3 = self.ofsite(x3, edge_index, edge_attr3, state3, batch, bond_batch)
 
 
@@ -119,8 +126,9 @@ class HWizard(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         loss = self._common_ste(batch, batch_idx) 
         #print("loss train:",loss.item()) 
-        self.log("loss/train", loss.item())
+        self.log("loss/train", loss.item(), batch_size=len(batch), sync_dist=True )
         #self.log_unused_parameters()
+        torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
         return loss
 
 
@@ -132,10 +140,10 @@ class HWizard(pl.LightningModule):
                 print(f"Parameter {name} is  used in the forward pass.-------")#not used
     def validation_step(self, batch, batch_idx):
         loss = self._common_ste(batch, batch_idx) 
-        #print("loss val:",loss.item())  
-        self.log("loss/val", loss.item())
+        print("loss val:",loss.item())
+        self.log("loss/val", loss.item(), batch_size=len(batch), sync_dist=True)
         return loss
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=0.005)
+        optimizer = torch.optim.Adam(self.parameters(), lr=0.0005)
         return optimizer

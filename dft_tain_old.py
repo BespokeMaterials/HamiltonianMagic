@@ -117,7 +117,7 @@ def save_spot(exp_name, spot_nr, model, data):
     model.to(device)
 
     # Save model
-    torch.save(model.state_dict(), f"{path}/model.pt")
+    torch.save(model.state_dict(), f"{path}/model_.pt")
 
     # Save data
     for ko, inputs in enumerate(data):

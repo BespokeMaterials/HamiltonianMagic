@@ -85,8 +85,7 @@ def ham_difference(ham_target_, ham_pred_):
     print("ham_target_", ham_target_[0].shape,ham_target_[1].shape )
     print("ham_pred_", ham_pred_[0].shape,  ham_pred_[0].shape)
     dif = 0
-    dif_0_=ham_target_[0]-ham_pred_[0]
-    dif_1_ = ham_target_[1] - ham_pred_[1]
+    d
 
     for i, ham_target in enumerate(ham_target_):
         ham_pred = ham_pred_[i]
@@ -128,7 +127,7 @@ def main(exp_name,train_data_path,test_data_path):
 
     print(f"Number of elements in train_dataloader: {num_train_elements}")
     print(f"Number of elements in test_dataloader: {num_test_elements}")
-    val_check_interval =1
+    val_check_interval =0.9
 
     #Spot 1
     model.loss_function = hop_on_difference
