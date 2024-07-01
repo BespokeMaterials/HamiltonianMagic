@@ -107,19 +107,19 @@ def main(exp_name,train_data_path,test_data_path):
     model = HWizard(edge_shape=51,
                     node_shape=2,
                     u_shape=10,
-                    embed_size=[20, 20, 10],
+                    embed_size=[32, 32, 20],
                     ham_output_size=[2,2,1],
-                    orbital_blocks=2,
+                    orbital_blocks=4,
                     pair_interaction_blocks=2,
                     onsite_depth=2,
                     ofsite_depth=2)
 
     m_path= "/home/ICN2/atomut/HamiltonianMagic/EXPERIMENTS/HW_model_mixt4_spots_new/spot1/model_.pt"
-    model.load_state_dict(torch.load(m_path))
+    #model.load_state_dict(torch.load(m_path))
 
-    training_data = torch.load(train_data_path )[:2]
-    test_data = torch.load(test_data_path )[:2]
-    train_dataloader = DataLoader(test_data, batch_size=2, shuffle=True,num_workers=31 )
+    training_data = torch.load(train_data_path )[1:2]
+    test_data = torch.load(test_data_path )[1:2]
+    train_dataloader = DataLoader(test_data, batch_size=1, shuffle=False,num_workers=31 )
     test_dataloader = DataLoader(training_data, batch_size=1, shuffle=False,num_workers=31 )
     # Get the number of elements in each dataloader
     num_train_elements = len(train_dataloader.dataset)
@@ -127,10 +127,10 @@ def main(exp_name,train_data_path,test_data_path):
 
     print(f"Number of elements in train_dataloader: {num_train_elements}")
     print(f"Number of elements in test_dataloader: {num_test_elements}")
-    val_check_interval =0.9
+    val_check_interval =1
 
     #Spot 1
-    for _ in range(50):
+    for _ in range(1):
         model.loss_function = ham_difference
         trainer = pl.Trainer(max_epochs = 10,
                              val_check_interval=val_check_interval,
@@ -156,11 +156,15 @@ def main(exp_name,train_data_path,test_data_path):
                              log_every_n_steps=3
                              )
         trainer.fit(model, train_dataloader, test_dataloader)
+        save_spot(model=model,
+                  exp_name=exp_name,
+                  spot_nr=1,
+                  data=test_dataloader)
     # model = trainer.model
 
     print("# Spot 2.0")
     model.loss_function = ham_difference
-    trainer = pl.Trainer(max_epochs=500,
+    trainer = pl.Trainer(max_epochs=50,
                          val_check_interval=val_check_interval,
                          logger=logger,
                          strategy='ddp_find_unused_parameters_true',
@@ -209,6 +213,6 @@ def main(exp_name,train_data_path,test_data_path):
 
 if __name__ == "__main__":
     exp_name = "HW_model_mixt4_spots_mini"
-    train_data_path = "DATA/DFT/BN_DFT_GRAPH/test.pt"
-    test_data_path = "DATA/DFT/BN_DFT_GRAPH/train.pt"
+    train_data_path = "DATA/DFT/BN_DFT_GRAPH/test_5.pt"
+    test_data_path = "DATA/DFT/BN_DFT_GRAPH/test_5.pt"
     main(exp_name, train_data_path, test_data_path)

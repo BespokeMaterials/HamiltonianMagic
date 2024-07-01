@@ -337,7 +337,7 @@ def main(files_path, test_ratio, saving_spot, radius):
 
     # ge the files and shuffle them:
     files = list_files_in_directory(files_path)
-    files=files[:3]
+    files=files[:5]
     # shuffle
 
     # Extract structure and build the graph
@@ -346,9 +346,9 @@ def main(files_path, test_ratio, saving_spot, radius):
     graphs = [structure_to_graph(structure, radius) for structure in tqdm(structures)]
 
     train_ds = MaterialDS(graphs[:int(1 - len(graphs) * test_ratio)])
-    tr.save(train_ds, f'{saving_spot}/train.pt')
+    tr.save(train_ds, f'{saving_spot}/train_5.pt')
     test_ds = MaterialDS(graphs[1 - int(len(graphs) * test_ratio):])
-    tr.save(test_ds, f'{saving_spot}/test.pt')
+    tr.save(test_ds, f'{saving_spot}/test_5.pt')
     return 0
 
 

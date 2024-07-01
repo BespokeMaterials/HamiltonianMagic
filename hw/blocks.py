@@ -277,7 +277,11 @@ class Onsite(MessagePassing):
         
 
         self.l1=MeGNet(edge_shape=input_dim[0], node_shape=input_dim[1], u_shape=input_dim[2], embed_size=[int(input_dim[0]/2),int(input_dim[1]/2),int(input_dim[2]/2)], inner_skip=True)
+
         self.l2 = MeGNet(edge_shape=int(input_dim[0] / 2), node_shape=int(input_dim[1] / 2),
+                         u_shape=int(input_dim[2] / 2), embed_size=[int(i / 2) for i in input_dim],
+                         inner_skip=True)
+        self.l3 = MeGNet(edge_shape=int(input_dim[0] / 2), node_shape=int(input_dim[1] / 2),
                          u_shape=int(input_dim[2] / 2), embed_size=output_dim,
                          inner_skip=True)
 
@@ -293,7 +297,7 @@ class Onsite(MessagePassing):
         """
         x, edge_attr, state = self.l1(x, edge_index, edge_attr, state, batch, bond_batch)
         x, edge_attr, state = self.l2(x, edge_index, edge_attr, state, batch, bond_batch)
-
+        x, edge_attr, state = self.l3(x, edge_index, edge_attr, state, batch, bond_batch)
         return   x,  edge_attr, state
 
 
@@ -312,7 +316,10 @@ class Ofsite(MessagePassing):
         super().__init__(aggr="mean")
 
         self.l1=MeGNet(edge_shape=input_dim[0], node_shape=input_dim[1], u_shape=input_dim[2], embed_size=[int(input_dim[0]/2),int(input_dim[1]/2),int(input_dim[2]/2)], inner_skip=True)
-        self.l2 = MeGNet(edge_shape=int(input_dim[0]/2), node_shape=int(input_dim[1]/2), u_shape=int(input_dim[2]/2), embed_size=output_dim,
+        self.l2 = MeGNet(edge_shape=int(input_dim[0] / 2), node_shape=int(input_dim[1] / 2),
+                         u_shape=int(input_dim[2] / 2), embed_size=[int(i/2) for i in input_dim ],
+                         inner_skip=True)
+        self.l3 = MeGNet(edge_shape=int(input_dim[0]/2), node_shape=int(input_dim[1]/2), u_shape=int(input_dim[2]/2), embed_size=output_dim,
                          inner_skip=True)
     def forward(self, x, edge_index, edge_attr, state, batch, bond_batch):
         """
@@ -327,7 +334,7 @@ class Ofsite(MessagePassing):
 
         x, edge_attr, state = self.l1(x, edge_index, edge_attr, state, batch, bond_batch)
         x, edge_attr, state = self.l2(x, edge_index, edge_attr, state, batch, bond_batch)
-
+        x, edge_attr, state = self.l3(x, edge_index, edge_attr, state, batch, bond_batch)
 
 
         return   x,  edge_attr, state

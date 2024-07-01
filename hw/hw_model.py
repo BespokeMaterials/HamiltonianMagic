@@ -15,7 +15,7 @@ class HWizard(pl.LightningModule):
                  u_shape,
                  embed_size=[32, 32, 32],
                  ham_output_size=[2,2,1],
-                 orbital_blocks=2,
+                 orbital_blocks=4,
                  pair_interaction_blocks=1,
                  onsite_depth=2,
                  ofsite_depth=3):
