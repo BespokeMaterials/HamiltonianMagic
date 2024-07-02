@@ -291,7 +291,7 @@ def main(exp_name, train_data_path, test_data_path):
     training_data = torch.load(train_data_path, )
     test_data = torch.load(test_data_path, )
 
-    train_dataloader = DataLoader(test_data, batch_size=1, shuffle=True, )
+    train_dataloader = DataLoader(test_data, batch_size=3, shuffle=True, )
     test_dataloader = DataLoader(training_data, batch_size=1, shuffle=False, )
     val_loader = None
 
